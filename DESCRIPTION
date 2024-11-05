@@ -4,11 +4,17 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Chen", "Yang", , "cafferychen777@tamu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0009-9151-2901"))
-Description: A comprehensive toolkit for comparing and evaluating different
-    Differential Abundance Analysis (DAA) methods in microbiome studies.
-    Provides tools for method comparison, performance evaluation, and
-    result visualization.
+Description: A comprehensive toolkit for comparing and evaluating Differential 
+    Abundance Analysis (DAA) methods in microbiome studies. The package addresses 
+    key challenges in microbiome data analysis including data sparsity, 
+    compositionality, and overdispersion. It provides tools for data import and 
+    simulation, method execution and comparison, performance evaluation, 
+    sensitivity analysis, and result visualization. Designed to help researchers 
+    select appropriate DAA methods based on their data characteristics while 
+    integrating seamlessly with existing microbiome analysis packages.
 License: MIT + file LICENSE
+URL: https://github.com/cafferychen777/microbiomeDAAcomp
+BugReports: https://github.com/cafferychen777/microbiomeDAAcomp/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -21,13 +27,17 @@ Imports:
     purrr,
     tibble,
     vegan,
-    biomformat
+    biomformat,
+    DESeq2,
+    ALDEx2,
+    ANCOMBC,
+    VennDiagram,
+    rmarkdown,
+    knitr
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    DESeq2,
-    ALDEx2,
-    ANCOMBC
+    covr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
