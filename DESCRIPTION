@@ -20,7 +20,8 @@ Imports:
     stats,
     purrr,
     tibble,
-    vegan
+    vegan,
+    biomformat
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
