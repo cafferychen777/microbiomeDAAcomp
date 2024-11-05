@@ -1,0 +1,82 @@
+---
+title: "Introduction to microbiomeDAAcomp"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to microbiomeDAAcomp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The microbiomeDAAcomp package provides a comprehensive framework for comparing and evaluating different Differential Abundance Analysis (DAA) methods in microbiome studies. This vignette demonstrates the basic workflow and key functionalities of the package.
+
+## Installation
+
+You can install the development version of microbiomeDAAcomp from GitHub:
+
+```{r eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("cafferychen777/microbiomeDAAcomp")
+```
+
+## Basic Usage
+
+### Data Import
+
+First, let's import some microbiome data:
+
+```{r eval=FALSE}
+library(microbiomeDAAcomp)
+
+# Import data (example with CSV format)
+data <- import_data("path/to/data.csv", format = "csv")
+```
+
+### Data Simulation
+
+For testing and evaluation purposes, we can simulate microbiome data:
+
+```{r eval=FALSE}
+# Simulate a dataset with 100 samples and 50 taxa
+sim_data <- simulate_data(
+  n_samples = 100,
+  n_taxa = 50,
+  dispersion = 0.3,
+  effect_size = 1
+)
+```
+
+### Running DAA Methods
+
+The package allows you to run multiple DAA methods and compare their results:
+
+```{r eval=FALSE}
+# Run multiple DAA methods
+results <- run_daa_methods(
+  data = sim_data,
+  methods = c("DESeq2", "ALDEx2")
+)
+```
+
+## Future Development
+
+This package is under active development. Upcoming features include:
+- Implementation of additional DAA methods
+- Advanced visualization tools
+- Performance benchmarking capabilities
+- Comprehensive method comparison metrics
+
+## Session Info
+
+```{r}
+sessionInfo()
+```
+```
