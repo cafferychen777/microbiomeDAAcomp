@@ -16,10 +16,17 @@ Imports:
     phyloseq,
     ggplot2,
     dplyr,
-    tidyr
+    tidyr,
+    stats,
+    purrr,
+    tibble,
+    vegan
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    DESeq2,
+    ALDEx2,
+    ANCOMBC
 Config/testthat/edition: 3
 VignetteBuilder: knitr
