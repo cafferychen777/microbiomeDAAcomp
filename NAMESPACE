@@ -1,1 +1,8 @@
 exportPattern("^[[:alpha:]]+")
+
+# Export S3 methods
+S3method(print, daa_performance)
+S3method(plot, daa_performance)
+
+# Import required packages
+import(ggplot2)
