@@ -12,22 +12,22 @@ test_that("import_data handles CSV format correctly", {
         Phylum = c("Firmicutes", "Bacteroidetes", "Proteobacteria"),
         row.names = c("OTU1", "OTU2", "OTU3")
     )
-    
+
     temp_file <- tempfile(fileext = ".csv")
     write.csv(test_data, temp_file)
-    
+
     # Test import
-    result <- import_data(temp_file, 
+    result <- import_data(temp_file,
                          format = "csv",
                          taxonomy_cols = c("Kingdom", "Phylum"))
-    
+
     # Cleanup
     unlink(temp_file)
-    
+
     # Verify results
     expect_s4_class(result, "phyloseq")
     expect_equal(nrow(phyloseq::otu_table(result)), 3)
     expect_equal(ncol(phyloseq::otu_table(result)), 2)
     expect_equal(nrow(phyloseq::tax_table(result)), 3)
     expect_equal(ncol(phyloseq::tax_table(result)), 2)
-}) 
+})
