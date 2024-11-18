@@ -79,4 +79,3 @@ This package is under active development. Upcoming features include:
 ```{r}
 sessionInfo()
 ```
-```
