@@ -45,16 +45,9 @@
 #' @importFrom ALDEx2 aldex aldex.clr
 #' @importFrom ANCOMBC ancombc
 #' @importFrom parallel mclapply
-run_daa_methods <- function(data = NULL,
+run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL, 
                           methods = c("DESeq2", "ALDEx2", "ANCOM-BC"),
-                          count_matrix = NULL,
-                          group_info = NULL,
-                          alpha = 0.05,
-                          paired = FALSE,
-                          p_adjust_method = "BH",
-                          cores = 1,
-                          ...) {
-    
+                          alpha = 0.05, p_adjust_method = "BH", ...) {
     # Input validation and data extraction
     if (is.null(data) && (is.null(count_matrix) || is.null(group_info))) {
         stop("Must provide either 'data' object or both 'count_matrix' and 'group_info'")
@@ -70,62 +63,109 @@ run_daa_methods <- function(data = NULL,
         }
     }
     
-    methods <- match.arg(methods, several.ok = TRUE)
+    # 验证方法参数
+    valid_methods <- c("DESeq2", "ALDEx2", "ANCOM-BC")
+    methods <- match.arg(arg = methods, choices = valid_methods, several.ok = TRUE)
     
-    # Initialize results storage
+    # 初始化结果列表
     results <- list()
-    runtime <- numeric(length(methods))
-    parameters <- list()
+    for (m in methods) {
+        results[[m]] <- NULL
+    }
     
-    # Run each method
-    for (i in seq_along(methods)) {
-        method <- methods[i]
+    # 初始化运行时间向量
+    runtime <- numeric(length(methods))
+    names(runtime) <- methods
+    
+    # 运行每个方法
+    for (method in methods) {
         start_time <- Sys.time()
         
         tryCatch({
-            results[[method]] <- switch(method,
+            method_result <- switch(method,
                 "DESeq2" = run_deseq2(count_matrix, group_info, alpha, p_adjust_method, ...),
                 "ALDEx2" = run_aldex2(count_matrix, group_info, alpha, p_adjust_method, ...),
                 "ANCOM-BC" = run_ancombc(count_matrix, group_info, alpha, ...)
             )
-            runtime[i] <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-            parameters[[method]] <- list(alpha = alpha, 
-                                      p_adjust_method = p_adjust_method,
-                                      paired = paired)
+            if (is.null(method_result)) {
+                warning(paste(method, "returned NULL result"))
+            }
+            results[[method]] <- method_result
         }, error = function(e) {
-            warning(sprintf("Error in method %s: %s", method, e$message))
+            warning(paste(method, "error:", e$message))
+            # 确保错误时也保持 NULL 值
             results[[method]] <- NULL
-            runtime[i] <- NA
         })
+        
+        runtime[method] <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
     }
     
-    # Create summary comparison
+    # 确保结果列表有正确的名称
+    if (length(results) == 0) {
+        results <- setNames(vector("list", length(methods)), methods)
+    }
+    
+    # 创建结果摘要
     summary <- create_summary(results, methods)
     
-    return(list(
+    # 返回结果
+    list(
         results = results,
         summary = summary,
-        runtime = setNames(runtime, methods),
-        parameters = parameters
-    ))
+        runtime = runtime,
+        parameters = list(
+            alpha = alpha,
+            p_adjust_method = p_adjust_method
+        )
+    )
 }
 
 # Helper function for DESeq2
-run_deseq2 <- function(counts, groups, alpha, p_adjust_method, ...) {
-    dds <- DESeq2::DESeqDataSetFromMatrix(
-        countData = round(counts),
-        colData = data.frame(group = groups),
-        design = ~ group
-    )
-    dds <- DESeq2::DESeq(dds)
-    res <- DESeq2::results(dds, alpha = alpha, pAdjustMethod = p_adjust_method)
-    return(as.data.frame(res))
+run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...) {
+    # 预处理数据：添加小的伪计数以避免零值问题
+    counts <- counts + 1
+    
+    # 检查数据有效性
+    if (all(counts == counts[1,1])) {
+        warning("All counts are identical, DESeq2 analysis may not be meaningful")
+        return(NULL)
+    }
+    
+    # 创建 DESeqDataSet 对象并运行分析
+    tryCatch({
+        dds <- DESeq2::DESeqDataSetFromMatrix(
+            countData = round(counts),
+            colData = data.frame(group = factor(groups)),
+            design = ~ group
+        )
+        
+        dds <- DESeq2::DESeq(dds, quiet = TRUE, fitType = "local")
+        res <- DESeq2::results(dds, alpha = alpha, pAdjustMethod = p_adjust_method)
+        
+        # 转换为数据框并添加必要的列
+        result_df <- as.data.frame(res)
+        result_df$feature <- rownames(result_df)
+        result_df$significant <- result_df$padj < alpha
+        
+        return(result_df)
+    }, error = function(e) {
+        warning(paste("DESeq2 error:", e$message))
+        return(NULL)
+    })
 }
 
 # Helper function for ALDEx2
 run_aldex2 <- function(counts, groups, alpha, p_adjust_method, ...) {
-    ald <- ALDEx2::aldex(counts, groups, test = "t", effect = TRUE)
-    return(as.data.frame(ald))
+    # 确保 groups 是字符向量
+    groups <- as.character(groups)
+    
+    tryCatch({
+        ald <- ALDEx2::aldex(as.matrix(counts), groups, test = "t", effect = TRUE)
+        return(as.data.frame(ald))
+    }, error = function(e) {
+        warning(paste("ALDEx2 error:", e$message))
+        return(NULL)
+    })
 }
 
 # Helper function for ANCOM-BC
@@ -141,10 +181,26 @@ run_ancombc <- function(counts, groups, alpha, ...) {
 
 # Helper function to create results summary
 create_summary <- function(results, methods) {
-    summary_df <- data.frame(
+    # 如果所有结果都为 NULL，返回空的摘要
+    if (all(sapply(results, is.null))) {
+        return(data.frame(
+            Method = methods,
+            N_Significant = 0,
+            Mean_Effect = 0,
+            stringsAsFactors = FALSE
+        ))
+    }
+    
+    data.frame(
         Method = methods,
-        N_Significant = sapply(results, function(x) sum(x$padj < 0.05, na.rm = TRUE)),
-        Mean_Effect = sapply(results, function(x) mean(abs(x$log2FoldChange), na.rm = TRUE))
+        N_Significant = sapply(results, function(x) {
+            if (is.null(x) || !("padj" %in% names(x))) return(0)
+            sum(x$padj < 0.05, na.rm = TRUE)
+        }),
+        Mean_Effect = sapply(results, function(x) {
+            if (is.null(x) || !("log2FoldChange" %in% names(x))) return(0)
+            mean(abs(x$log2FoldChange), na.rm = TRUE)
+        }),
+        stringsAsFactors = FALSE
     )
-    return(summary_df)
 } 

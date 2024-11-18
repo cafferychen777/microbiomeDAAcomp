@@ -44,9 +44,9 @@
 #' @importFrom ape rtree
 simulate_data <- function(n_samples, 
                          n_taxa, 
-                         n_diff = floor(n_taxa * 0.1),
+                         n_diff = 0,
                          fold_changes = 2,
-                         group_sizes = rep(n_samples/2, 2),
+                         group_sizes = NULL,
                          dispersion = 0.3,
                          lib_sizes = NULL,
                          zero_prob = 0.3,
@@ -55,9 +55,20 @@ simulate_data <- function(n_samples,
     
     # Input validation
     if (!is.null(seed)) set.seed(seed)
-    if (sum(group_sizes) != n_samples) {
-        stop("Group sizes must sum to n_samples")
+    
+    # 处理 group_sizes
+    if (is.null(group_sizes)) {
+        group_sizes <- rep(n_samples/2, 2)
+    } else {
+        if (length(group_sizes) != 2) {
+            stop("group_sizes must be a vector of length 2")
+        }
+        if (sum(group_sizes) != n_samples) {
+            stop("Sum of group sizes must equal n_samples")
+        }
     }
+    
+    # 其他验证
     if (n_diff > n_taxa) {
         stop("Number of differential taxa cannot exceed total number of taxa")
     }
@@ -70,8 +81,8 @@ simulate_data <- function(n_samples,
         lib_sizes <- rnbinom(n_samples, mu = 1e4, size = 20)
     }
     
-    # Create group information
-    group_info <- factor(rep(1:length(group_sizes), group_sizes))
+    # Create group information - 修改这部分以使用确切的组大小
+    group_info <- factor(rep(c("A", "B"), group_sizes))
     
     # Select differential taxa
     diff_taxa <- sample(1:n_taxa, n_diff)
@@ -82,7 +93,7 @@ simulate_data <- function(n_samples,
     for (i in 1:n_samples) {
         # Adjust abundances based on group and differential status
         curr_abundances <- base_abundances
-        if (group_info[i] == 2) {
+        if (group_info[i] == "B") {
             curr_abundances[diff_taxa] <- curr_abundances[diff_taxa] * fold_changes
         }
         

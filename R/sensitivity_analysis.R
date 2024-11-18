@@ -17,8 +17,16 @@ sensitivity_analysis <- function(data, parameters, method_names) {
     if (!is.list(parameters)) {
         stop("parameters must be a list")
     }
+    
     if (!is.character(method_names)) {
         stop("method_names must be a character vector")
+    }
+    
+    if (length(parameters) == 0) {
+        return(structure(
+            list(),
+            class = c("daa_sensitivity", "list")
+        ))
     }
     
     # Initialize results list
@@ -31,48 +39,65 @@ sensitivity_analysis <- function(data, parameters, method_names) {
         # For each parameter
         for (param_name in names(parameters)) {
             param_values <- parameters[[param_name]]
+            
+            # 处理空参数值的情况
+            if (length(param_values) == 0) {
+                method_results[[param_name]] <- data.frame(
+                    parameter_value = numeric(0),
+                    n_significant = numeric(0),
+                    overlap_ratio = numeric(0),
+                    effect_size = numeric(0),
+                    stringsAsFactors = FALSE,
+                    row.names = character(0)  # 确保行名也是空的
+                )
+                next
+            }
+            
+            # 创建结果数据框
             param_results <- data.frame(
                 parameter_value = param_values,
-                n_significant = NA,
-                overlap_ratio = NA,
-                effect_size = NA
+                n_significant = rep(NA, length(param_values)),
+                overlap_ratio = rep(NA, length(param_values)),
+                effect_size = rep(NA, length(param_values)),
+                stringsAsFactors = FALSE
             )
             
-            # Store baseline results
-            baseline_params <- list()
-            baseline_params[[param_name]] <- param_values[1]
-            baseline_results <- try(
-                run_daa_method(data, method = method, params = baseline_params),
-                silent = TRUE
-            )
-            
-            if (!inherits(baseline_results, "try-error")) {
-                baseline_sig <- get_significant_features(baseline_results)
+            # 只有在参数值非空时才执行分析
+            if (length(param_values) > 0) {
+                # Store baseline results
+                baseline_params <- list()
+                baseline_params[[param_name]] <- param_values[1]
+                baseline_results <- try(
+                    run_daa_method(data, method = method, params = baseline_params),
+                    silent = TRUE
+                )
                 
-                # Test each parameter value
-                for (i in seq_along(param_values)) {
-                    current_params <- list()
-                    current_params[[param_name]] <- param_values[i]
+                if (!inherits(baseline_results, "try-error")) {
+                    baseline_sig <- get_significant_features(baseline_results)
                     
-                    # Run analysis with current parameter value
-                    current_results <- try(
-                        run_daa_method(data, method = method, params = current_params),
-                        silent = TRUE
-                    )
-                    
-                    if (!inherits(current_results, "try-error")) {
-                        current_sig <- get_significant_features(current_results)
+                    # Test each parameter value
+                    for (i in seq_along(param_values)) {
+                        current_params <- list()
+                        current_params[[param_name]] <- param_values[i]
                         
-                        # Calculate metrics
-                        param_results$n_significant[i] <- length(current_sig)
-                        param_results$overlap_ratio[i] <- calculate_overlap_ratio(
-                            baseline_sig, 
-                            current_sig
+                        current_results <- try(
+                            run_daa_method(data, method = method, params = current_params),
+                            silent = TRUE
                         )
-                        param_results$effect_size[i] <- calculate_effect_size(
-                            baseline_results,
-                            current_results
-                        )
+                        
+                        if (!inherits(current_results, "try-error")) {
+                            current_sig <- get_significant_features(current_results)
+                            
+                            param_results$n_significant[i] <- length(current_sig)
+                            param_results$overlap_ratio[i] <- calculate_overlap_ratio(
+                                baseline_sig, 
+                                current_sig
+                            )
+                            param_results$effect_size[i] <- calculate_effect_size(
+                                baseline_results,
+                                current_results
+                            )
+                        }
                     }
                 }
             }
@@ -83,8 +108,8 @@ sensitivity_analysis <- function(data, parameters, method_names) {
         results[[method]] <- method_results
     }
     
-    class(results) <- c("daa_sensitivity", class(results))
-    return(results)
+    # 确保返回值的类型正确
+    structure(results, class = c("daa_sensitivity", "list"))
 }
 
 #' Calculate overlap ratio between two sets of significant features
@@ -103,32 +128,93 @@ calculate_overlap_ratio <- function(set1, set2) {
 #' @param result2 Second analysis result
 #' @return Numeric value representing effect size
 calculate_effect_size <- function(result1, result2) {
-    # Extract effect sizes or test statistics
-    stats1 <- get_test_statistics(result1)
-    stats2 <- get_test_statistics(result2)
-    
-    # Calculate correlation or difference
-    if (length(stats1) == length(stats2)) {
-        return(cor(stats1, stats2, method = "spearman"))
+    # 如果输入是测试用例中的简单列表格式
+    if (!is.null(result1$test_statistics) && !is.null(result2$test_statistics)) {
+        stats1 <- result1$test_statistics
+        stats2 <- result2$test_statistics
     } else {
-        return(NA)
+        # 否则使用通用的提取函数
+        stats1 <- get_test_statistics(result1)
+        stats2 <- get_test_statistics(result2)
     }
+    
+    # 输入验证
+    if (is.null(stats1) || is.null(stats2)) {
+        return(NA_real_)
+    }
+    
+    if (length(stats1) == 0 || length(stats2) == 0) {
+        return(NA_real_)
+    }
+    
+    # 确保两个向量长度相同
+    if (length(stats1) != length(stats2)) {
+        return(NA_real_)
+    }
+    
+    # 移除 NA 值
+    valid_indices <- !is.na(stats1) & !is.na(stats2)
+    if (!any(valid_indices)) {
+        return(NA_real_)
+    }
+    
+    stats1 <- stats1[valid_indices]
+    stats2 <- stats2[valid_indices]
+    
+    # 计算相关性
+    if (length(unique(stats1)) == 1 || length(unique(stats2)) == 1) {
+        return(NA_real_)
+    }
+    
+    cor_val <- try(cor(stats1, stats2, method = "spearman"), silent = TRUE)
+    
+    if (inherits(cor_val, "try-error")) {
+        return(NA_real_)
+    }
+    
+    return(cor_val)
 }
 
 #' Get significant features from DAA results
 #' @param results DAA analysis results
 #' @return Character vector of significant feature names
 get_significant_features <- function(results) {
-    # This function should be implemented based on the specific
-    # structure of your DAA results
-    stop("Function not yet implemented")
+    if (is.null(results) || length(results) == 0) {
+        return(character(0))
+    }
+    # 根据结果类型返回显著特征
+    if ("padj" %in% names(results)) {
+        return(names(results$padj[results$padj < 0.05]))
+    } else if ("significant" %in% names(results)) {
+        return(names(results$significant[results$significant]))
+    }
+    return(character(0))
 }
 
 #' Get test statistics from DAA results
 #' @param results DAA analysis results
 #' @return Numeric vector of test statistics
 get_test_statistics <- function(results) {
-    # This function should be implemented based on the specific
-    # structure of your DAA results
-    stop("Function not yet implemented")
+    if (is.null(results) || length(results) == 0) {
+        return(numeric(0))
+    }
+    
+    # 根据结果类型返回检验统计量
+    if ("stat" %in% names(results)) {
+        stats <- results$stat
+    } else if ("statistic" %in% names(results)) {
+        stats <- results$statistic
+    } else if ("W" %in% names(results)) {
+        stats <- results$W
+    } else {
+        return(numeric(0))
+    }
+    
+    # 确保返回数值向量
+    stats <- as.numeric(stats)
+    if (any(is.na(stats))) {
+        return(numeric(0))
+    }
+    
+    return(stats)
 } 
