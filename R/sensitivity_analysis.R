@@ -1,17 +1,62 @@
-#' Perform Sensitivity Analysis
+#' Perform Sensitivity Analysis for DAA Methods
 #' 
-#' @param data Microbiome data object
-#' @param parameters List of parameters to vary
-#' @param method_names Character vector of methods to analyze
+#' @description
+#' Conducts sensitivity analysis for differential abundance analysis (DAA) methods
+#' by systematically varying input parameters and evaluating their impact on results.
+#' 
+#' @param data Microbiome data object containing count matrix and metadata
+#' @param parameters List of parameters to vary, where:
+#'        \itemize{
+#'          \item Names are parameter names (e.g., "alpha", "min_count")
+#'          \item Values are vectors of parameter values to test
+#'        }
+#' @param method_names Character vector of DAA methods to analyze
 #'
-#' @return List containing sensitivity analysis results
+#' @return A list of class "daa_sensitivity" containing:
+#'         \itemize{
+#'           \item results: Nested list of sensitivity results for each method
+#'           \item parameter_effects: Data frame summarizing parameter effects
+#'           \item overlap_ratios: Matrix of result overlap between parameter values
+#'           \item effect_sizes: Numeric vector of effect sizes for parameter changes
+#'         }
+#'
+#' @details
+#' The function evaluates:
+#' - Changes in number of significant features
+#' - Result overlap between parameter values
+#' - Effect sizes of parameter variations
+#' - Stability of results across parameter ranges
+#'
+#' For each parameter and method combination, the function:
+#' 1. Establishes baseline results using first parameter value
+#' 2. Compares results from other parameter values to baseline
+#' 3. Calculates overlap ratios and effect sizes
+#' 4. Aggregates results for easy interpretation
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' sensitivity_results <- sensitivity_analysis(data, 
-#'                                           parameters = list(alpha = seq(0.01, 0.1, 0.01)))
+#' # Basic sensitivity analysis
+#' sensitivity_results <- sensitivity_analysis(
+#'   data = microbiome_data,
+#'   parameters = list(
+#'     alpha = seq(0.01, 0.1, 0.01),
+#'     min_count = c(5, 10, 20, 50)
+#'   ),
+#'   method_names = c("DESeq2", "ALDEx2")
+#' )
+#' 
+#' # Plot results
+#' plot(sensitivity_results, parameter = "alpha")
+#' 
+#' # Access specific results
+#' head(sensitivity_results$parameter_effects)
 #' }
+#'
+#' @seealso 
+#' \code{\link{run_daa_method}} for running individual DAA methods
+#' \code{\link{plot.daa_sensitivity}} for plotting sensitivity results
 sensitivity_analysis <- function(data, parameters, method_names) {
     # Input validation
     if (!is.list(parameters)) {
