@@ -1,15 +1,42 @@
 #' Compare Different DAA Methods
 #' 
-#' @param performance_results Data frame of performance metrics
-#' @param comparison_type Type of comparison to perform
-#' @param ... Additional arguments for specific comparison types
+#' This function performs comparative analysis of different differential abundance analysis (DAA) methods
+#' using various approaches including statistical tests and visualizations.
+#' 
+#' @param performance_results Data frame containing performance metrics for different DAA methods.
+#'        Must include columns: method, accuracy, precision, recall, f1_score
+#' @param comparison_type Type of comparison to perform:
+#'        \itemize{
+#'          \item "statistical": Performs Friedman test and post-hoc analysis
+#'          \item "visual": Creates performance visualization plots
+#'          \item "comprehensive": Combines both statistical and visual analyses
+#'        }
+#' @param ... Additional arguments passed to internal functions
 #'
-#' @return List containing comparison results and visualizations
+#' @return A list of class "daa_comparison" containing:
+#'         \itemize{
+#'           \item statistical: Results from Friedman test and post-hoc analysis
+#'           \item visual: ggplot objects showing performance comparisons
+#'           \item summary: Summary statistics for each method
+#'         }
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' comparison <- compare_methods(performance_results, comparison_type = "statistical")
+#' # Create sample performance results
+#' perf_data <- data.frame(
+#'   method = rep(c("method1", "method2"), each = 10),
+#'   accuracy = runif(20, 0.8, 0.95),
+#'   precision = runif(20, 0.8, 0.95),
+#'   recall = runif(20, 0.8, 0.95),
+#'   f1_score = runif(20, 0.8, 0.95)
+#' )
+#' 
+#' # Run comprehensive comparison
+#' results <- compare_methods(perf_data, comparison_type = "comprehensive")
+#' 
+#' # Run only statistical comparison
+#' stat_results <- compare_methods(perf_data, comparison_type = "statistical")
 #' }
 compare_methods <- function(performance_results, 
                           comparison_type = c("statistical", "visual", "comprehensive"),
