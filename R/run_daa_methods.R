@@ -1,50 +1,72 @@
 #' Run Multiple DAA Methods
 #' 
 #' @title Execute Multiple Differential Abundance Analysis Methods
-#' @description Run multiple DAA methods on the same dataset and return standardized results
-#' for comparison.
+#' @description Run multiple differential abundance analysis (DAA) methods on microbiome data
+#' and return standardized results for comparison. Supports multiple popular methods including
+#' DESeq2, ALDEx2, and ANCOM-BC.
 #' 
 #' @param data A list containing count matrix and group information, or a phyloseq object
-#' @param methods Character vector of method names to run. 
-#'        Supported methods: "DESeq2", "ALDEx2", "ANCOM-BC"
-#' @param count_matrix Optional matrix of counts if not providing full data object
-#' @param group_info Optional factor of group assignments if not providing full data object
+#' @param methods Character vector of method names to run. Options:
+#'        \itemize{
+#'          \item "DESeq2": Differential expression analysis based on negative binomial distribution
+#'          \item "ALDEx2": ANOVA-like differential expression procedure
+#'          \item "ANCOM-BC": Analysis of composition of microbiomes with bias correction
+#'        }
+#' @param count_matrix Optional matrix of counts if not providing full data object.
+#'        Rows represent features (e.g., taxa), columns represent samples
+#' @param group_info Optional factor of group assignments if not providing full data object.
+#'        Must match the order of samples in count_matrix
 #' @param alpha Significance level for differential abundance calling (default: 0.05)
-#' @param paired Logical; whether the data is paired (default: FALSE)
-#' @param p_adjust_method Method for p-value adjustment (default: "BH")
-#' @param cores Number of cores for parallel processing (default: 1)
+#' @param p_adjust_method Method for p-value adjustment. Options include:
+#'        "BH" (default), "bonferroni", "holm", "hochberg", "BY"
 #' @param ... Additional arguments passed to individual methods
 #'
 #' @return A list containing:
-#'   \item{results}{List of results from each method}
-#'   \item{summary}{Data frame comparing results across methods}
-#'   \item{runtime}{Vector of computation times}
-#'   \item{parameters}{List of parameters used for each method}
+#'         \itemize{
+#'           \item results: List of results from each method
+#'           \item summary: Data frame comparing results across methods
+#'           \item runtime: Vector of computation times for each method
+#'           \item parameters: List of parameters used for each method
+#'         }
+#'
+#' @details
+#' The function handles:
+#' - Input validation and data preprocessing
+#' - Method-specific parameter optimization
+#' - Error handling and warnings
+#' - Standardization of results across methods
+#' - Performance timing
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Run multiple methods on simulated data
-#' sim_data <- simulate_data(n_samples = 60, n_taxa = 100)
+#' # Using phyloseq object
+#' data(GlobalPatterns)
 #' results <- run_daa_methods(
-#'   data = sim_data,
+#'   data = GlobalPatterns,
 #'   methods = c("DESeq2", "ALDEx2"),
 #'   alpha = 0.05
 #' )
 #' 
-#' # Run with custom parameters
+#' # Using count matrix and group info
 #' results <- run_daa_methods(
 #'   count_matrix = counts,
 #'   group_info = groups,
 #'   methods = "DESeq2",
 #'   p_adjust_method = "bonferroni"
 #' )
+#' 
+#' # Access results
+#' head(results$summary)
+#' plot(results$runtime)
 #' }
 #' 
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results
 #' @importFrom ALDEx2 aldex aldex.clr
 #' @importFrom ANCOMBC ancombc
 #' @importFrom parallel mclapply
+#' @importFrom phyloseq otu_table sample_data
 run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL, 
                           methods = c("DESeq2", "ALDEx2", "ANCOM-BC"),
                           alpha = 0.05, p_adjust_method = "BH", ...) {
