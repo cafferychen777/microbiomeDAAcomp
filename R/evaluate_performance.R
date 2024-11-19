@@ -1,9 +1,54 @@
-#' Evaluate DAA method performance
-#' @param results List of method results
-#' @param true_status True differential abundance status
-#' @param metrics Optional vector of metrics to calculate
-#' @param conf_level Confidence level for intervals (default: NULL)
-#' @return S3 class object of type 'daa_performance'
+#' Evaluate Performance of DAA Methods
+#' 
+#' This function evaluates the performance of differential abundance analysis (DAA) methods
+#' by calculating various performance metrics and their confidence intervals.
+#' 
+#' @param test_results List of method results, where each element contains logical vectors 
+#'        of predicted differential abundance status
+#' @param true_status Logical vector of true differential abundance status
+#' @param metrics Character vector specifying which metrics to calculate. Available options:
+#'        \itemize{
+#'          \item "sensitivity": True positive rate (TPR)
+#'          \item "specificity": True negative rate (TNR)
+#'          \item "precision": Positive predictive value (PPV)
+#'          \item "f1_score": Harmonic mean of precision and sensitivity
+#'          \item "accuracy": Overall prediction accuracy
+#'          \item "mcc": Matthews correlation coefficient
+#'        }
+#' @param conf_level Confidence level for intervals (default: 0.95)
+#'
+#' @return An object of class 'daa_performance' (data.frame) containing:
+#'         \itemize{
+#'           \item Requested performance metrics for each method
+#'           \item Confidence intervals for sensitivity, specificity, and precision
+#'           \item Rankings for applicable metrics
+#'         }
+#' 
+#' @details
+#' The function calculates performance metrics based on confusion matrix values.
+#' Confidence intervals are computed using binomial test. All metrics (except MCC) 
+#' are bounded between 0 and 1. MCC is bounded between -1 and 1.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create sample test results
+#' test_results <- list(
+#'   method1 = c(TRUE, FALSE, TRUE, FALSE),
+#'   method2 = c(TRUE, TRUE, FALSE, FALSE)
+#' )
+#' true_status <- c(TRUE, FALSE, TRUE, FALSE)
+#' 
+#' # Evaluate performance
+#' perf <- evaluate_performance(
+#'   test_results,
+#'   true_status,
+#'   metrics = c("sensitivity", "specificity", "precision")
+#' )
+#' print(perf)
+#' plot(perf, metric = "sensitivity")
+#' }
 evaluate_performance <- function(test_results, true_status, metrics = c("sensitivity", "specificity", "precision", "f1_score")) {
     # 验证输入
     if (!is.list(test_results) || length(test_results) == 0) {
