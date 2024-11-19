@@ -2,33 +2,59 @@
 #' 
 #' @title Simulate Microbiome Count Data for Method Evaluation
 #' @description Generate realistic microbiome count data with controlled differential abundance patterns
-#' for evaluating DAA methods.
+#' for evaluating differential abundance analysis (DAA) methods. Supports various parameters to
+#' simulate different scenarios and data characteristics commonly observed in microbiome studies.
 #' 
 #' @param n_samples Number of samples to simulate (total across all groups)
 #' @param n_taxa Number of taxa to simulate
 #' @param n_diff Number of differentially abundant taxa
 #' @param fold_changes Numeric vector of fold changes for differential taxa. 
 #'        If single value, applied to all differential taxa
-#' @param group_sizes Numeric vector specifying size of each group. Must sum to n_samples
-#' @param dispersion Dispersion parameter for negative binomial distribution
-#' @param lib_sizes Vector of library sizes. If NULL, randomly generated
-#' @param zero_prob Probability of generating zero counts (default: 0.3)
+#' @param group_sizes Numeric vector specifying size of each group. Must sum to n_samples.
+#'        Default is equal group sizes
+#' @param dispersion Dispersion parameter for negative binomial distribution (default: 0.3).
+#'        Controls the amount of variability in counts
+#' @param lib_sizes Vector of library sizes. If NULL, randomly generated from
+#'        negative binomial distribution
+#' @param zero_prob Probability of generating zero counts (default: 0.3).
+#'        Controls sparsity of the data
 #' @param phylo_tree Logical; whether to generate a phylogenetic tree (default: FALSE)
 #' @param seed Random seed for reproducibility
 #'
 #' @return A list containing:
-#'   \item{counts}{Count matrix (taxa in rows, samples in columns)}
-#'   \item{truth}{Vector indicating which taxa are truly differential}
-#'   \item{group_info}{Factor indicating group membership}
-#'   \item{phylo_tree}{Phylogenetic tree (if requested)}
+#'         \itemize{
+#'           \item counts: Count matrix (taxa in rows, samples in columns)
+#'           \item truth: Logical vector indicating which taxa are truly differential
+#'           \item group_info: Factor indicating group membership
+#'           \item phylo_tree: Phylogenetic tree (if requested)
+#'         }
+#'
+#' @details
+#' The simulation process:
+#' 1. Generates base abundances from log-normal distribution
+#' 2. Applies fold changes to selected taxa in treatment group
+#' 3. Generates counts using negative binomial distribution
+#' 4. Introduces zeros according to zero_prob
+#' 5. Optionally generates phylogenetic tree
+#'
+#' The function ensures:
+#' - Realistic abundance distributions
+#' - Controlled differential abundance patterns
+#' - Appropriate levels of overdispersion
+#' - Realistic sparsity patterns
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Basic simulation
-#' sim_data <- simulate_data(n_samples = 60, n_taxa = 100, n_diff = 10)
+#' # Basic simulation with default parameters
+#' sim_data <- simulate_data(
+#'   n_samples = 60,
+#'   n_taxa = 100,
+#'   n_diff = 10
+#' )
 #' 
-#' # More complex simulation
+#' # Complex simulation with custom parameters
 #' sim_data <- simulate_data(
 #'   n_samples = 100,
 #'   n_taxa = 200,
@@ -36,11 +62,17 @@
 #'   fold_changes = c(2, 3, 4),
 #'   group_sizes = c(40, 60),
 #'   zero_prob = 0.4,
-#'   phylo_tree = TRUE
+#'   phylo_tree = TRUE,
+#'   seed = 123
 #' )
+#' 
+#' # Access simulated data
+#' dim(sim_data$counts)
+#' table(sim_data$truth)
+#' table(sim_data$group_info)
 #' }
 #' 
-#' @importFrom stats rnbinom rbinom rmultinom
+#' @importFrom stats rnorm rnbinom rbinom
 #' @importFrom ape rtree
 simulate_data <- function(n_samples, 
                          n_taxa, 
