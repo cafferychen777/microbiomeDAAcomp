@@ -1,15 +1,36 @@
 #' Import Microbiome Data
 #' 
 #' @title Import Microbiome Data from Various Formats
-#' @description Import microbiome data from different file formats and convert to a standardized phyloseq object
+#' @description Import and standardize microbiome data from different file formats into a phyloseq object.
+#' This function supports multiple input formats including BIOM, phyloseq, and CSV files, making it
+#' flexible for various data sources and analysis workflows.
 #' 
 #' @param data_path Character string specifying the path to the input data file
-#' @param format Character string specifying the format of input data ("biom", "phyloseq", or "csv")
-#' @param taxonomy_cols Character vector specifying taxonomy column names for CSV format
-#' @param sample_meta_data Data frame or path to sample metadata file (optional)
-#' @param ... Additional arguments passed to the import function
+#' @param format Character string specifying the format of input data. Options:
+#'        \itemize{
+#'          \item "biom": Biological Observation Matrix format
+#'          \item "phyloseq": Saved phyloseq object
+#'          \item "csv": Comma-separated values file
+#'        }
+#' @param taxonomy_cols Character vector specifying taxonomy column names for CSV format.
+#'        Default: c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus")
+#' @param sample_meta_data Data frame or path to sample metadata file (optional).
+#'        If provided as a path, the file should be a CSV with samples as rows
+#' @param ... Additional arguments passed to read.csv() when reading metadata
 #'
-#' @return A phyloseq object containing the imported microbiome data
+#' @return A phyloseq object containing:
+#'         \itemize{
+#'           \item OTU table (abundance matrix)
+#'           \item Taxonomy table
+#'           \item Sample metadata (if provided)
+#'         }
+#'
+#' @details
+#' For CSV format, the input file should have:
+#' - First column: OTU/ASV IDs
+#' - Middle columns: Sample abundance values
+#' - Last columns: Taxonomy information matching taxonomy_cols
+#'
 #' @export
 #'
 #' @examples
@@ -17,13 +38,19 @@
 #' # Import from BIOM format
 #' data <- import_data("path/to/data.biom", format = "biom")
 #' 
-#' # Import from CSV with taxonomy columns
-#' data <- import_data("path/to/data.csv", 
-#'                    format = "csv",
-#'                    taxonomy_cols = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"))
+#' # Import from CSV with taxonomy columns and metadata
+#' data <- import_data(
+#'   data_path = "path/to/data.csv",
+#'   format = "csv",
+#'   taxonomy_cols = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"),
+#'   sample_meta_data = "path/to/metadata.csv"
+#' )
+#' 
+#' # Import saved phyloseq object
+#' data <- import_data("path/to/saved_phyloseq.RData", format = "phyloseq")
 #' }
 #' 
-#' @importFrom phyloseq phyloseq otu_table tax_table sample_data
+#' @importFrom phyloseq phyloseq otu_table tax_table sample_data merge_phyloseq import_biom
 #' @importFrom biomformat read_biom
 #' @importFrom utils read.csv
 import_data <- function(data_path, 
