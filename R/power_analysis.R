@@ -1,18 +1,60 @@
-#' Conduct Statistical Power Analysis
+#' Conduct Statistical Power Analysis for Two-Sample T-Tests
 #' 
-#' @param effect_sizes Numeric vector of effect sizes to evaluate
-#' @param sample_sizes Numeric vector of sample sizes to evaluate
-#' @param alpha Significance level
-#' @param n_simulations Number of simulations for each combination
+#' @description
+#' Performs Monte Carlo simulation-based power analysis for two-sample t-tests
+#' by evaluating different combinations of effect sizes and sample sizes.
+#' 
+#' @param effect_sizes Numeric vector of effect sizes to evaluate. These represent
+#'        the mean differences between treatment and control groups in standard
+#'        deviation units (Cohen's d).
+#' @param sample_sizes Numeric vector of sample sizes to evaluate. These represent
+#'        the total sample size (will be split equally between groups).
+#' @param alpha Significance level for hypothesis testing (Type I error rate).
+#'        Default is 0.05.
+#' @param n_simulations Number of Monte Carlo simulations to run for each
+#'        combination of effect size and sample size. Default is 1000.
 #'
-#' @return Data frame containing power analysis results
+#' @return A data frame containing:
+#'         \itemize{
+#'           \item effect_size: Evaluated effect size
+#'           \item sample_size: Evaluated sample size
+#'           \item power: Estimated statistical power (proportion of significant results)
+#'         }
+#'
+#' @details
+#' The function assumes:
+#' - Equal sample sizes between groups
+#' - Normal distribution of data
+#' - Equal variances between groups
+#' - Two-sided alternative hypothesis
+#' Power is estimated using Monte Carlo simulation by generating data under
+#' the alternative hypothesis and calculating the proportion of significant results.
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' power_results <- power_analysis(effect_sizes = seq(0.5, 2, 0.5),
-#'                                sample_sizes = c(50, 100, 200))
+#' # Basic usage
+#' power_results <- power_analysis(
+#'   effect_sizes = seq(0.5, 2, 0.5),
+#'   sample_sizes = c(50, 100, 200)
+#' )
+#' 
+#' # More precise estimation with more simulations
+#' precise_results <- power_analysis(
+#'   effect_sizes = c(0.3, 0.5, 0.8),
+#'   sample_sizes = seq(20, 100, 20),
+#'   n_simulations = 5000
+#' )
+#' 
+#' # Plot results
+#' library(ggplot2)
+#' ggplot(power_results, aes(x = sample_size, y = power, color = factor(effect_size))) +
+#'   geom_line() +
+#'   geom_point()
 #' }
+#' 
+#' @importFrom stats rnorm t.test
 power_analysis <- function(effect_sizes, 
                          sample_sizes, 
                          alpha = 0.05,
