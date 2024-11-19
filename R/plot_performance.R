@@ -1,17 +1,62 @@
 #' Visualize Performance Comparison Results
 #' 
-#' @param results Performance comparison results
-#' @param plot_type Type of plot to generate
-#' @param theme Visual theme settings
+#' @title Create Visualization for Performance Metrics
+#' @description Generate various types of plots to visualize and compare performance metrics
+#' across different differential abundance analysis methods. Supports multiple visualization
+#' types and customizable themes.
+#' 
+#' @param results A data frame of class 'daa_performance' containing performance metrics
+#'        Must include 'method' column and at least one metric column
+#' @param plot_type Type of plot to generate. Options:
+#'        \itemize{
+#'          \item "heatmap": Creates a heatmap showing all metrics for each method
+#'          \item "boxplot": Creates boxplots for each metric grouped by method
+#'          \item "violin": Creates violin plots with jittered points for distribution
+#'        }
+#' @param theme Visual theme settings. Options:
+#'        \itemize{
+#'          \item "default": Clean minimal theme
+#'          \item "dark": Dark background theme
+#'          \item "classic": Classic theme with white background
+#'        }
 #'
-#' @return ggplot object
+#' @return A ggplot2 object (or plotly object if plotly is available) containing:
+#'         \itemize{
+#'           \item Performance visualization based on specified plot_type
+#'           \item Confidence intervals (if available in input data)
+#'           \item Interactive features (if plotly is available)
+#'         }
+#'
+#' @details
+#' The function automatically handles:
+#' - Confidence interval visualization for boxplot and violin plots
+#' - Interactive features when plotly package is available
+#' - Automatic scaling for different metrics
+#' - Proper angle rotation for method labels
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' p <- plot_performance(results, plot_type = "heatmap")
-#' print(p)
+#' # Create heatmap visualization
+#' p1 <- plot_performance(results, plot_type = "heatmap", theme = "default")
+#' 
+#' # Create boxplot with confidence intervals
+#' p2 <- plot_performance(results, plot_type = "boxplot", theme = "dark")
+#' 
+#' # Create interactive violin plot
+#' p3 <- plot_performance(results, plot_type = "violin", theme = "classic")
+#' 
+#' # Print plots
+#' print(p1)
+#' print(p2)
+#' print(p3)
 #' }
+#' 
+#' @importFrom ggplot2 ggplot aes geom_tile geom_boxplot geom_violin geom_point
+#' @importFrom ggplot2 facet_wrap theme_minimal theme_dark theme_classic
+#' @importFrom tidyr pivot_longer
+#' @importFrom dplyr %>%
 plot_performance <- function(results, 
                            plot_type = c("heatmap", "boxplot", "violin"),
                            theme = "default") {
