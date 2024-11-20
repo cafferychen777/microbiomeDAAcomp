@@ -181,9 +181,18 @@ print.daa_performance <- function(x, ...) {
 #' Plot method for daa_performance objects
 #' @param x A daa_performance object
 #' @param metric Performance metric to plot ("sensitivity", "specificity", "precision", "f1_score")
+#' @param colors Vector of colors for bars and points (default: c("#2C3E50", "#E74C3C", "#3498DB", "#2ECC71"))
+#' @param base_size Base font size (default: 12)
+#' @param width Bar width (default: 0.6)
+#' @param conf_level Confidence level for intervals (default: 0.95)
 #' @param ... Additional arguments passed to plotting functions
 #' @export
-plot.daa_performance <- function(x, metric = "sensitivity", ...) {
+plot.daa_performance <- function(x, metric = "sensitivity", 
+                               colors = c("#2C3E50", "#E74C3C", "#3498DB", "#2ECC71"),
+                               base_size = 12,
+                               width = 0.6,
+                               conf_level = 0.95,
+                               ...) {
     # Validate metric parameter
     valid_metrics <- c("sensitivity", "specificity", "precision", "f1_score")
     if (!metric %in% valid_metrics) {
@@ -198,28 +207,74 @@ plot.daa_performance <- function(x, metric = "sensitivity", ...) {
         stringsAsFactors = FALSE
     )
     
-    # Create plot using ggplot2
-    p <- ggplot2::ggplot(plot_data, 
-                        ggplot2::aes(x = .data$Method, 
-                                   y = .data$Value)) +
-        ggplot2::geom_col(fill = "steelblue") +
-        ggplot2::labs(title = paste("Method Performance -", metric),
-                     y = metric) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+    # Define metric labels
+    metric_labels <- c(
+        sensitivity = "Sensitivity",
+        specificity = "Specificity",
+        precision = "Precision",
+        f1_score = "F1 Score"
+    )
     
-    # Add confidence intervals if available
-    ci_lower <- paste0(metric, "_ci_lower")
-    ci_upper <- paste0(metric, "_ci_upper")
-    if (all(c(ci_lower, ci_upper) %in% names(x))) {
-        plot_data$CI_lower <- x[[ci_lower]]
-        plot_data$CI_upper <- x[[ci_upper]]
-        p <- p + ggplot2::geom_errorbar(
-            ggplot2::aes(ymin = .data$CI_lower, 
-                        ymax = .data$CI_upper),
-            width = 0.2
+    # Create enhanced plot
+    p <- ggplot2::ggplot(plot_data, 
+                        ggplot2::aes(x = stats::reorder(.data$Method, .data$Value),
+                                   y = .data$Value)) +
+        # Add bars
+        ggplot2::geom_bar(stat = "identity", 
+                         fill = colors[1],
+                         alpha = 0.8,
+                         width = width) +
+        # Add points
+        ggplot2::geom_point(size = 3, 
+                           color = colors[2]) +
+        # Add confidence intervals if available
+        {
+            ci_lower <- paste0(metric, "_ci_lower")
+            ci_upper <- paste0(metric, "_ci_upper")
+            if (all(c(ci_lower, ci_upper) %in% names(x))) {
+                ggplot2::geom_errorbar(
+                    ggplot2::aes(ymin = x[[ci_lower]], 
+                                ymax = x[[ci_upper]]),
+                    width = width/2,
+                    color = colors[2],
+                    linewidth = 0.8
+                )
+            }
+        } +
+        # Customize labels and theme
+        ggplot2::labs(
+            title = NULL,
+            x = NULL,
+            y = metric_labels[metric],
+            caption = if(any(grepl("_ci_", names(x)))) {
+                sprintf("Error bars represent %.0f%% confidence intervals", 
+                        conf_level * 100)
+            } else {
+                NULL
+            }
+        ) +
+        # Scale y axis from 0 to 1
+        ggplot2::scale_y_continuous(
+            limits = c(0, 1),
+            breaks = seq(0, 1, 0.2),
+            labels = scales::percent_format(accuracy = 1)
+        ) +
+        # Custom theme
+        ggplot2::theme_minimal(base_size = base_size) +
+        ggplot2::theme(
+            axis.text.x = ggplot2::element_text(angle = 45, 
+                                              hjust = 1,
+                                              face = "bold"),
+            axis.text.y = ggplot2::element_text(face = "bold"),
+            axis.title.y = ggplot2::element_text(face = "bold",
+                                               margin = ggplot2::margin(r = 10)),
+            panel.grid.major.x = ggplot2::element_blank(),
+            panel.grid.minor = ggplot2::element_blank(),
+            panel.border = ggplot2::element_rect(fill = NA, 
+                                               color = "black",
+                                               linewidth = 0.5),
+            plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10)
         )
-    }
     
     return(p)
 } 

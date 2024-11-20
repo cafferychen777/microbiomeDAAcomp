@@ -19,6 +19,7 @@
 #'          \item "dark": Dark background theme
 #'          \item "classic": Classic theme with white background
 #'        }
+#' @param colors Colors for the plots. Default: c("#4A90E2", "#50C878", "#E67E22")
 #'
 #' @return A ggplot2 object (or plotly object if plotly is available) containing:
 #'         \itemize{
@@ -37,30 +38,50 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Create heatmap visualization
-#' p1 <- plot_performance(results, plot_type = "heatmap", theme = "default")
+#' # Create sample test results
+#' test_results <- list(
+#'   "DESeq2" = c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE),
+#'   "edgeR" = c(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE),
+#'   "limma" = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE)
+#' )
+#' true_status <- c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE)
 #' 
-#' # Create boxplot with confidence intervals
-#' p2 <- plot_performance(results, plot_type = "boxplot", theme = "dark")
+#' # Calculate performance metrics
+#' perf <- evaluate_performance(
+#'   test_results,
+#'   true_status,
+#'   metrics = c("sensitivity", "specificity", "precision", "f1_score", "accuracy")
+#' )
 #' 
-#' # Create interactive violin plot
-#' p3 <- plot_performance(results, plot_type = "violin", theme = "classic")
-#' 
-#' # Print plots
+#' # Create different types of plots
+#' # Heatmap visualization
+#' p1 <- plot_performance(perf, plot_type = "heatmap", theme = "default")
 #' print(p1)
+#' 
+#' # Boxplot with confidence intervals
+#' p2 <- plot_performance(perf, plot_type = "boxplot", theme = "classic")
 #' print(p2)
+#' 
+#' # Violin plot with dark theme
+#' p3 <- plot_performance(perf, plot_type = "violin", theme = "dark")
 #' print(p3)
+#' 
+#' # Save plots if needed
+#' \dontrun{
+#'   ggplot2::ggsave("performance_heatmap.pdf", p1, width = 8, height = 6)
+#'   ggplot2::ggsave("performance_boxplot.pdf", p2, width = 10, height = 6)
+#'   ggplot2::ggsave("performance_violin.pdf", p3, width = 10, height = 6)
 #' }
 #' 
 #' @importFrom ggplot2 ggplot aes geom_tile geom_boxplot geom_violin geom_point
 #' @importFrom ggplot2 facet_wrap theme_minimal theme_dark theme_classic
 #' @importFrom tidyr pivot_longer
-#' @importFrom dplyr %>%
+#' @importFrom magrittr %>%
 #' @importFrom plotly ggplotly
 plot_performance <- function(results, 
                            plot_type = c("heatmap", "boxplot", "violin"),
-                           theme = "default") {
+                           theme = "default",
+                           colors = c("#4A90E2", "#50C878", "#E67E22")) {
     # Input validation
     plot_type <- match.arg(plot_type)
     if (!inherits(results, "daa_performance")) {
@@ -71,12 +92,21 @@ plot_performance <- function(results,
     metric_cols <- names(results)[!grepl("(method|_rank|_ci)", names(results))]
     
     # Prepare data for plotting
-    plot_data <- results %>%
-        tidyr::pivot_longer(
-            cols = all_of(metric_cols),
-            names_to = "metric",
-            values_to = "value"
-        )
+    plot_data <- tidyr::pivot_longer(
+        results,
+        cols = all_of(metric_cols),
+        names_to = "metric",
+        values_to = "value"
+    )
+    
+    # Define more professional metric labels
+    metric_labels <- c(
+        "accuracy" = "Accuracy",
+        "f1_score" = "F1 Score",
+        "precision" = "Precision",
+        "sensitivity" = "Sensitivity",
+        "specificity" = "Specificity"
+    )
     
     # Create base plot based on type
     p <- switch(plot_type,
@@ -87,9 +117,9 @@ plot_performance <- function(results,
                 ggplot2::geom_tile() +
                 ggplot2::scale_fill_viridis_c(limits = c(0, 1)) +
                 ggplot2::geom_text(
-                    ggplot2::aes(label = sprintf("%.3f", value)),
+                    ggplot2::aes(label = sprintf("%.2f", value)),
                     color = "white",
-                    size = 3
+                    size = 4
                 ) +
                 ggplot2::labs(
                     title = "Performance Metrics Heatmap",
@@ -100,24 +130,40 @@ plot_performance <- function(results,
             # Create boxplot
             ggplot2::ggplot(plot_data, 
                            ggplot2::aes(x = method, y = value, fill = method)) +
-                ggplot2::geom_boxplot() +
-                ggplot2::facet_wrap(~metric, scales = "free_y") +
+                ggplot2::geom_boxplot(alpha = 0.8, width = 0.5) +
+                ggplot2::facet_wrap(~metric, 
+                                  scales = "free_y",
+                                  labeller = as_labeller(metric_labels)) +
+                ggplot2::scale_y_continuous(limits = c(0, 1),
+                                          breaks = seq(0, 1, 0.25),
+                                          labels = scales::percent_format()) +
+                ggplot2::scale_fill_manual(values = colors) +
                 ggplot2::labs(
-                    title = "Performance Metrics Boxplot",
-                    y = "Value"
-                )
+                    y = "Performance Score",
+                    x = "Method"
+                ) +
+                ggplot2::guides(fill = "none")
         },
         "violin" = {
             # Create violin plot
             ggplot2::ggplot(plot_data, 
                            ggplot2::aes(x = method, y = value, fill = method)) +
-                ggplot2::geom_violin() +
-                ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.2)) +
-                ggplot2::facet_wrap(~metric, scales = "free_y") +
+                ggplot2::geom_violin(alpha = 0.7) +
+                ggplot2::geom_point(size = 2, 
+                                  position = ggplot2::position_jitter(width = 0.1),
+                                  alpha = 0.6) +
+                ggplot2::facet_wrap(~metric, 
+                                  scales = "free_y",
+                                  labeller = as_labeller(metric_labels)) +
+                ggplot2::scale_y_continuous(limits = c(0, 1),
+                                          breaks = seq(0, 1, 0.25),
+                                          labels = scales::percent_format()) +
+                ggplot2::scale_fill_manual(values = colors) +
                 ggplot2::labs(
-                    title = "Performance Metrics Violin Plot",
-                    y = "Value"
-                )
+                    y = "Performance Score",
+                    x = "Method"
+                ) +
+                ggplot2::guides(fill = "none")
         }
     )
     
@@ -129,34 +175,20 @@ plot_performance <- function(results,
         ggplot2::theme_minimal()  # Default fallback
     ) +
         ggplot2::theme(
-            axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-            plot.title = ggplot2::element_text(hjust = 0.5)
+            axis.text.x = ggplot2::element_text(angle = 45, 
+                                              hjust = 1,
+                                              face = "bold"),
+            axis.text.y = ggplot2::element_text(face = "bold"),
+            axis.title = ggplot2::element_text(face = "bold", size = 12),
+            strip.text = ggplot2::element_text(face = "bold", size = 11),
+            panel.grid.minor = ggplot2::element_blank(),
+            panel.grid.major.x = ggplot2::element_blank(),
+            panel.spacing = ggplot2::unit(1.5, "lines"),
+            plot.title = ggplot2::element_text(hjust = 0.5,
+                                             face = "bold",
+                                             size = 14),
+            plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10)
         )
-    
-    # Add confidence intervals if available
-    if (any(grepl("_ci_", names(results)))) {
-        if (plot_type %in% c("boxplot", "violin")) {
-            p <- p + ggplot2::geom_errorbar(
-                data = results %>%
-                    tidyr::pivot_longer(
-                        cols = metric_cols,
-                        names_to = "metric",
-                        values_to = "value"
-                    ),
-                ggplot2::aes(
-                    ymin = get(paste0(metric, "_ci_lower")),
-                    ymax = get(paste0(metric, "_ci_upper"))
-                ),
-                width = 0.2,
-                color = "darkgray"
-            )
-        }
-    }
-    
-    # Add interactive features if plotly is available
-    if (requireNamespace("plotly", quietly = TRUE)) {
-        p <- plotly::ggplotly(p)
-    }
     
     return(p)
 }
