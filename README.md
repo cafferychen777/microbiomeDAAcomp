@@ -116,9 +116,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 MIT License
 
-## Documentation
-Visit our [online documentation](https://cafferychen777.github.io/microbiomeDAAcomp/) for complete guides and API references.
-
 ## Dependencies
 ```r
 # Required packages
