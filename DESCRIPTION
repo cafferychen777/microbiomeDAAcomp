@@ -34,7 +34,8 @@ Imports:
     biomformat,
     DESeq2,
     ALDEx2,
-    ANCOMBC
+    ANCOMBC,
+    magrittr
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
@@ -47,3 +48,6 @@ Additional_repositories:
     https://bioconductor.org/packages/3.17/bioc,
     https://bioconductor.org/packages/3.17/data/annotation,
     https://bioconductor.org/packages/3.17/data/experiment
+Depends: 
+    R (>= 2.10)
+LazyData: true
