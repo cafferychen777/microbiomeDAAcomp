@@ -62,28 +62,115 @@ The function handles:
 \item Standardization of results across methods
 \item Performance timing
 }
+
+Common use cases include:
+\itemize{
+\item Comparing results across multiple DAA methods
+\item Benchmarking method performance
+\item Ensemble analysis of differential abundance
+}
 }
 \examples{
-\dontrun{
-# Using phyloseq object
-data(GlobalPatterns)
+# Example 1: Basic usage with simulated data
+set.seed(123)
+n_features <- 100
+n_samples <- 20
+
+# Generate baseline counts
+counts <- matrix(rnbinom(n_features * n_samples, 
+                        size = 3, 
+                        prob = 0.5), 
+                nrow = n_features)
+
+# Create clear group differences
+group_labels <- factor(rep(c("Control", "Treatment"), each = n_samples/2))
+diff_features <- 1:20  # First 20 features are differential
+fold_change <- 5
+counts[diff_features, group_labels == "Treatment"] <- 
+    counts[diff_features, group_labels == "Treatment"] * fold_change
+
+# Add informative names
+rownames(counts) <- paste0("Feature", 1:n_features)
+colnames(counts) <- paste0("Sample", 1:n_samples)
+
+# Example 2: Basic method comparison
 results <- run_daa_methods(
-  data = GlobalPatterns,
+  count_matrix = counts,
+  group_info = group_labels,
   methods = c("DESeq2", "ALDEx2"),
   alpha = 0.05
 )
 
-# Using count matrix and group info
-results <- run_daa_methods(
-  count_matrix = counts,
-  group_info = groups,
-  methods = "DESeq2",
-  p_adjust_method = "bonferroni"
-)
+# Example 3: Examining results
+# View summary statistics
+print(results$summary)
 
-# Access results
-head(results$summary)
-plot(results$runtime)
+# Check runtime performance
+print(results$runtime)
+
+# Access method-specific results
+head(results$results$DESeq2)
+
+# Example 4: Visualization of results
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  # Prepare performance comparison data
+  plot_data <- data.frame(
+    Method = names(results$results),
+    Significant = sapply(results$results, 
+                        function(x) sum(x$padj < 0.05, na.rm = TRUE)),
+    Runtime = results$runtime
+  )
+  
+  # Create publication-ready plot
+  p <- ggplot2::ggplot(plot_data, 
+                       ggplot2::aes(x = Method, 
+                                   y = Significant, 
+                                   fill = Method)) +
+    ggplot2::geom_bar(stat = "identity", alpha = 0.8) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = "Comparison of DAA Methods",
+      subtitle = paste("Fold change =", fold_change,
+                      "| True positives =", length(diff_features)),
+      y = "Number of Significant Features",
+      x = "Method"
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      plot.title = ggplot2::element_text(face = "bold"),
+      legend.position = "none"
+    )
+  
+  print(p)
 }
 
+# Example 5: Advanced usage with custom parameters
+\dontrun{
+  results_custom <- run_daa_methods(
+    count_matrix = counts,
+    group_info = group_labels,
+    methods = c("DESeq2", "ALDEx2", "ANCOM-BC"),
+    alpha = 0.01,
+    p_adjust_method = "bonferroni"
+  )
+  
+  # Compare results with different parameters
+  print(results_custom$summary)
+}
+
+}
+\references{
+\itemize{
+\item Love, M.I., et al. (2014) Moderated estimation of fold change and
+dispersion for RNA-seq data with DESeq2. Genome Biology, 15, 550.
+\item Fernandes, A.D., et al. (2014) Anova-like differential expression
+(ALDEx) analysis for mixed population RNA-seq. PLoS ONE, 9, e89731.
+}
+}
+\seealso{
+\itemize{
+\item \code{\link[DESeq2]{DESeq}} for DESeq2 method details
+\item \code{\link[ALDEx2]{aldex}} for ALDEx2 method details
+\item \code{\link[ANCOMBC]{ancombc}} for ANCOM-BC method details
+}
 }

@@ -48,23 +48,44 @@ For each parameter and method combination, the function:
 }
 }
 \examples{
-\dontrun{
-# Basic sensitivity analysis
+# Create sample data
+set.seed(123)
+counts <- matrix(
+  rpois(100 * 20, lambda = 10),
+  nrow = 100,
+  ncol = 20,
+  dimnames = list(
+    paste0("Feature", 1:100),
+    paste0("Sample", 1:20)
+  )
+)
+
+metadata <- data.frame(
+  group = factor(rep(c("Control", "Treatment"), each = 10)),
+  row.names = colnames(counts)
+)
+
+microbiome_data <- list(
+  counts = counts,
+  metadata = metadata
+)
+
+# Run sensitivity analysis
 sensitivity_results <- sensitivity_analysis(
   data = microbiome_data,
   parameters = list(
-    alpha = seq(0.01, 0.1, 0.01),
-    min_count = c(5, 10, 20, 50)
+    alpha = c(0.01, 0.05, 0.1),
+    min_count = c(5, 10, 20)
   ),
   method_names = c("DESeq2", "ALDEx2")
 )
 
-# Plot results
-plot(sensitivity_results, parameter = "alpha")
+# Access results
+str(sensitivity_results)
 
-# Access specific results
-head(sensitivity_results$parameter_effects)
-}
+# Get parameter effects for a specific method
+deseq2_alpha_results <- sensitivity_results$DESeq2$alpha
+print(deseq2_alpha_results)
 }
 \seealso{
 \code{\link{run_daa_methods}} for running individual DAA methods

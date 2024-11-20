@@ -4,12 +4,28 @@
 \alias{plot.daa_performance}
 \title{Plot method for daa_performance objects}
 \usage{
-\method{plot}{daa_performance}(x, metric = "sensitivity", ...)
+\method{plot}{daa_performance}(
+  x,
+  metric = "sensitivity",
+  colors = c("#2C3E50", "#E74C3C", "#3498DB", "#2ECC71"),
+  base_size = 12,
+  width = 0.6,
+  conf_level = 0.95,
+  ...
+)
 }
 \arguments{
 \item{x}{A daa_performance object}
 
 \item{metric}{Performance metric to plot ("sensitivity", "specificity", "precision", "f1_score")}
+
+\item{colors}{Vector of colors for bars and points (default: c("#2C3E50", "#E74C3C", "#3498DB", "#2ECC71"))}
+
+\item{base_size}{Base font size (default: 12)}
+
+\item{width}{Bar width (default: 0.6)}
+
+\item{conf_level}{Confidence level for intervals (default: 0.95)}
 
 \item{...}{Additional arguments passed to plotting functions}
 }

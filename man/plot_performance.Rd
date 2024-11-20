@@ -7,7 +7,8 @@
 plot_performance(
   results,
   plot_type = c("heatmap", "boxplot", "violin"),
-  theme = "default"
+  theme = "default",
+  colors = c("#4A90E2", "#50C878", "#E67E22")
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ Must include 'method' column and at least one metric column}
 \item "dark": Dark background theme
 \item "classic": Classic theme with white background
 }}
+
+\item{colors}{Colors for the plots. Default: c("#4A90E2", "#50C878", "#E67E22")}
 }
 \value{
 A ggplot2 object (or plotly object if plotly is available) containing:
@@ -53,20 +56,39 @@ The function automatically handles:
 }
 }
 \examples{
-\dontrun{
-# Create heatmap visualization
-p1 <- plot_performance(results, plot_type = "heatmap", theme = "default")
+# Create sample test results
+test_results <- list(
+  "DESeq2" = c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE),
+  "edgeR" = c(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE),
+  "limma" = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE)
+)
+true_status <- c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE)
 
-# Create boxplot with confidence intervals
-p2 <- plot_performance(results, plot_type = "boxplot", theme = "dark")
+# Calculate performance metrics
+perf <- evaluate_performance(
+  test_results,
+  true_status,
+  metrics = c("sensitivity", "specificity", "precision", "f1_score", "accuracy")
+)
 
-# Create interactive violin plot
-p3 <- plot_performance(results, plot_type = "violin", theme = "classic")
-
-# Print plots
+# Create different types of plots
+# Heatmap visualization
+p1 <- plot_performance(perf, plot_type = "heatmap", theme = "default")
 print(p1)
+
+# Boxplot with confidence intervals
+p2 <- plot_performance(perf, plot_type = "boxplot", theme = "classic")
 print(p2)
+
+# Violin plot with dark theme
+p3 <- plot_performance(perf, plot_type = "violin", theme = "dark")
 print(p3)
+
+# Save plots if needed
+\dontrun{
+  ggplot2::ggsave("performance_heatmap.pdf", p1, width = 8, height = 6)
+  ggplot2::ggsave("performance_boxplot.pdf", p2, width = 10, height = 6)
+  ggplot2::ggsave("performance_violin.pdf", p3, width = 10, height = 6)
 }
 
 }
