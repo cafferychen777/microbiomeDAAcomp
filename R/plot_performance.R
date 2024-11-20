@@ -57,6 +57,7 @@
 #' @importFrom ggplot2 facet_wrap theme_minimal theme_dark theme_classic
 #' @importFrom tidyr pivot_longer
 #' @importFrom dplyr %>%
+#' @importFrom plotly ggplotly
 plot_performance <- function(results, 
                            plot_type = c("heatmap", "boxplot", "violin"),
                            theme = "default") {
@@ -165,7 +166,17 @@ has_column <- function(data, col) {
     col %in% names(data)
 }
 
-# Add S3 method for automatic plotting
+#' Plot Method for DAA Performance Objects
+#'
+#' @description
+#' Automatically creates a visualization of DAA performance results using ggplot2.
+#'
+#' @param object A daa_performance object containing performance metrics
+#' @param ... Additional arguments passed to plot_performance
+#'
+#' @return A ggplot2 object
+#'
+#' @method autoplot daa_performance
 #' @export
 autoplot.daa_performance <- function(object, ...) {
     plot_performance(object, ...)

@@ -142,7 +142,19 @@ run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL,
     )
 }
 
-# Helper function for DESeq2
+#' Run DESeq2 Analysis
+#'
+#' @param counts Count matrix with features as rows and samples as columns
+#' @param groups Factor or vector specifying group assignments for samples
+#' @param alpha Significance level for differential abundance testing
+#' @param p_adjust_method Method for p-value adjustment
+#' @param ... Additional arguments passed to DESeq2 functions
+#'
+#' @return A data frame containing DESeq2 results with columns:
+#'         baseMean, log2FoldChange, lfcSE, stat, pvalue, padj,
+#'         feature, and significant
+#'
+#' @keywords internal
 run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...) {
     # 预处理数据：添加小的伪计数以避免零值问题
     counts <- counts + 1
@@ -176,7 +188,18 @@ run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...
     })
 }
 
-# Helper function for ALDEx2
+#' Run ALDEx2 Analysis
+#'
+#' @param counts Count matrix with features as rows and samples as columns
+#' @param groups Factor or vector specifying group assignments for samples
+#' @param alpha Significance level for differential abundance testing
+#' @param p_adjust_method Method for p-value adjustment
+#' @param ... Additional arguments passed to ALDEx2 functions
+#'
+#' @return A data frame containing ALDEx2 results including effect sizes
+#'         and statistical test results
+#'
+#' @keywords internal
 run_aldex2 <- function(counts, groups, alpha, p_adjust_method, ...) {
     # 确保 groups 是字符向量
     groups <- as.character(groups)
@@ -190,7 +213,17 @@ run_aldex2 <- function(counts, groups, alpha, p_adjust_method, ...) {
     })
 }
 
-# Helper function for ANCOM-BC
+#' Run ANCOM-BC Analysis
+#'
+#' @param counts Count matrix with features as rows and samples as columns
+#' @param groups Factor or vector specifying group assignments for samples
+#' @param alpha Significance level for differential abundance testing
+#' @param ... Additional arguments passed to ANCOM-BC functions
+#'
+#' @return A list containing ANCOM-BC results including bias-corrected
+#'         abundance differences and statistical significance
+#'
+#' @keywords internal
 run_ancombc <- function(counts, groups, alpha, ...) {
     ancombc_out <- ANCOMBC::ancombc(
         phyloseq::otu_table(counts, taxa_are_rows = TRUE),
@@ -201,7 +234,19 @@ run_ancombc <- function(counts, groups, alpha, ...) {
     return(ancombc_out$res)
 }
 
-# Helper function to create results summary
+#' Create Summary of DAA Results
+#'
+#' @param results List of results from different DAA methods
+#' @param methods Character vector of method names
+#'
+#' @return A data frame with columns:
+#'         \itemize{
+#'           \item Method: Name of the DAA method
+#'           \item N_Significant: Number of features called as significant
+#'           \item Mean_Effect: Mean absolute effect size
+#'         }
+#'
+#' @keywords internal
 create_summary <- function(results, methods) {
     # 如果所有结果都为 NULL，返回空的摘要
     if (all(sapply(results, is.null))) {

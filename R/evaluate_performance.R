@@ -49,7 +49,9 @@
 #' print(perf)
 #' plot(perf, metric = "sensitivity")
 #' }
-evaluate_performance <- function(test_results, true_status, metrics = c("sensitivity", "specificity", "precision", "f1_score")) {
+evaluate_performance <- function(test_results, true_status, 
+                               metrics = c("sensitivity", "specificity", "precision", "f1_score"),
+                               conf_level = 0.95) {
     # 验证输入
     if (!is.list(test_results) || length(test_results) == 0) {
         stop("results must be a list of method results")
@@ -97,13 +99,12 @@ evaluate_performance <- function(test_results, true_status, metrics = c("sensiti
         mcc <- if (mcc_den == 0) 0 else mcc_num / mcc_den
         
         # 计算置信区间
-        ci_level <- 0.95
         sens_ci <- if (tp + fn == 0) c(0, 0) else 
-                   as.numeric(binom.test(tp, tp + fn, conf.level = ci_level)$conf.int)
+                   as.numeric(binom.test(tp, tp + fn, conf.level = conf_level)$conf.int)
         spec_ci <- if (tn + fp == 0) c(0, 0) else 
-                   as.numeric(binom.test(tn, tn + fp, conf.level = ci_level)$conf.int)
+                   as.numeric(binom.test(tn, tn + fp, conf.level = conf_level)$conf.int)
         prec_ci <- if (tp + fp == 0) c(0, 0) else 
-                   as.numeric(binom.test(tp, tp + fp, conf.level = ci_level)$conf.int)
+                   as.numeric(binom.test(tp, tp + fp, conf.level = conf_level)$conf.int)
         
         # 返回请求的指标
         metrics_values <- list(

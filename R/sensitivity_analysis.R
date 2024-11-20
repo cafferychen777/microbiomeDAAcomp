@@ -33,6 +33,9 @@
 #' 3. Calculates overlap ratios and effect sizes
 #' 4. Aggregates results for easy interpretation
 #'
+#' @seealso 
+#' \code{\link{run_daa_methods}} for running individual DAA methods
+#'
 #' @export
 #'
 #' @examples
@@ -53,10 +56,6 @@
 #' # Access specific results
 #' head(sensitivity_results$parameter_effects)
 #' }
-#'
-#' @seealso 
-#' \code{\link{run_daa_method}} for running individual DAA methods
-#' \code{\link{plot.daa_sensitivity}} for plotting sensitivity results
 sensitivity_analysis <- function(data, parameters, method_names) {
     # Input validation
     if (!is.list(parameters)) {
