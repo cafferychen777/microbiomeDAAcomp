@@ -56,13 +56,15 @@ The function automatically handles:
 }
 }
 \examples{
-# Create sample test results
+# Create sample test results with more data points
+set.seed(123)
+n_samples <- 100
 test_results <- list(
-  "DESeq2" = c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE),
-  "edgeR" = c(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE),
-  "limma" = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE)
+  "DESeq2" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.7, 0.3)),
+  "edgeR" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.6, 0.4)),
+  "limma" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.5, 0.5))
 )
-true_status <- c(TRUE, FALSE, TRUE, FALSE, TRUE, TRUE)
+true_status <- sample(c(TRUE, FALSE), n_samples, replace = TRUE)
 
 # Calculate performance metrics
 perf <- evaluate_performance(
@@ -74,21 +76,16 @@ perf <- evaluate_performance(
 # Create different types of plots
 # Heatmap visualization
 p1 <- plot_performance(perf, plot_type = "heatmap", theme = "default")
-print(p1)
+if (interactive()) print(p1)
 
-# Boxplot with confidence intervals
+# Boxplot visualization
 p2 <- plot_performance(perf, plot_type = "boxplot", theme = "classic")
-print(p2)
+if (interactive()) print(p2)
 
-# Violin plot with dark theme
-p3 <- plot_performance(perf, plot_type = "violin", theme = "dark")
-print(p3)
-
-# Save plots if needed
 \dontrun{
-  ggplot2::ggsave("performance_heatmap.pdf", p1, width = 8, height = 6)
-  ggplot2::ggsave("performance_boxplot.pdf", p2, width = 10, height = 6)
-  ggplot2::ggsave("performance_violin.pdf", p3, width = 10, height = 6)
+  # Violin plot visualization
+  p3 <- plot_performance(perf, plot_type = "violin", theme = "dark")
+  if (interactive()) print(p3)
 }
 
 }
