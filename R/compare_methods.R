@@ -114,15 +114,14 @@ compare_methods <- function(performance_results,
     }
     
     # 添加汇总统计
-    results$summary <- performance_results %>%
-        dplyr::group_by(method) %>%
-        dplyr::summarise(
-            mean_accuracy = mean(accuracy),
-            sd_accuracy = sd(accuracy),
-            mean_precision = mean(precision),
-            mean_recall = mean(recall),
-            mean_f1 = mean(f1_score)
-        )
+    grouped_data <- dplyr::group_by(performance_results, method)
+    results$summary <- dplyr::summarise(grouped_data,
+        mean_accuracy = mean(accuracy),
+        sd_accuracy = sd(accuracy),
+        mean_precision = mean(precision),
+        mean_recall = mean(recall),
+        mean_f1 = mean(f1_score)
+    )
     
     # 根据比较类型过滤结果
     if (comparison_type == "statistical") {
@@ -136,7 +135,20 @@ compare_methods <- function(performance_results,
     return(results)
 }
 
-# 修改打印方法
+#' Print Method for DAA Comparison Objects
+#'
+#' @param x A daa_comparison object to print
+#' @param ... Additional arguments passed to print methods
+#'
+#' @return Invisibly returns the input object
+#'
+#' @examples
+#' \dontrun{
+#' comparison_results <- compare_methods(performance_data)
+#' print(comparison_results)
+#' }
+#'
+#' @export
 print.daa_comparison <- function(x, ...) {
     cat("DAA Method Comparison Results\n")
     cat("============================\n\n")
