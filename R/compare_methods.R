@@ -43,38 +43,38 @@ compare_methods <- function(performance_results,
                           ...) {
     comparison_type <- match.arg(comparison_type)
     
-    # 1. 首先验证输入类型
+    # 1. First, verify the input type.
     if (!is.data.frame(performance_results)) {
         stop("performance_results must be a data frame")
     }
     
-    # 2. 然后验证数据是否为空
+    # 2. Then verify if the data is empty
     if (nrow(performance_results) == 0) {
         stop("performance_results must contain data")
     }
     
-    # 3. 验证必需的列
+    # 3.Verify required columns
     required_cols <- c("method", "accuracy", "precision", "recall", "f1_score")
     if (!all(required_cols %in% colnames(performance_results))) {
         stop("performance_results must contain columns: ", 
              paste(required_cols, collapse = ", "))
     }
     
-    # 初始化结果列表
+    # Initialize result list
     results <- list(
         statistical = NULL,
         visual = NULL,
         summary = NULL
     )
     
-    # 执行统计比较
+    # Perform statistical comparison
     if (comparison_type %in% c("statistical", "comprehensive")) {
         n_methods <- length(unique(performance_results$method))
         if (n_methods < 2) {
             stop("groups must have more than one level")
         }
         
-        # 准备数据用于 Friedman 测试
+        # Preparing data for the Friedman test
         performance_matrix <- matrix(
             performance_results$accuracy,
             ncol = n_methods,
@@ -83,7 +83,7 @@ compare_methods <- function(performance_results,
         colnames(performance_matrix) <- unique(performance_results$method)
         rownames(performance_matrix) <- seq_len(nrow(performance_matrix))
         
-        # 执行 Friedman 测试
+        # Perform Friedman test
         tryCatch({
             friedman_test <- stats::friedman.test(performance_matrix)
             posthoc <- PMCMRplus::frdAllPairsNemenyiTest(performance_matrix)
@@ -98,7 +98,7 @@ compare_methods <- function(performance_results,
         })
     }
     
-    # 创建可视化
+    # Create Visualization
     if (comparison_type %in% c("visual", "comprehensive")) {
         perf_plot <- ggplot2::ggplot(performance_results, 
                                     ggplot2::aes(x = method)) +
@@ -113,7 +113,7 @@ compare_methods <- function(performance_results,
         )
     }
     
-    # 添加汇总统计
+    # Add summary statistics
     grouped_data <- dplyr::group_by(performance_results, method)
     results$summary <- dplyr::summarise(grouped_data,
         mean_accuracy = mean(accuracy),
@@ -123,7 +123,7 @@ compare_methods <- function(performance_results,
         mean_f1 = mean(f1_score)
     )
     
-    # 根据比较类型过滤结果
+    # Filter results based on comparison type
     if (comparison_type == "statistical") {
         results$visual <- NULL
     } else if (comparison_type == "visual") {

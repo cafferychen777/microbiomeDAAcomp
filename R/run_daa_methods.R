@@ -174,21 +174,21 @@ run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL,
         }
     }
 
-    # 验证方法参数
+    # Validate method parameters
     valid_methods <- c("DESeq2", "ALDEx2", "ANCOM-BC")
     methods <- match.arg(arg = methods, choices = valid_methods, several.ok = TRUE)
 
-    # 初始化结果列表
+    # Initialize results list
     results <- list()
     for (m in methods) {
         results[[m]] <- NULL
     }
 
-    # 初始化运行时间向量
+    # Initialize runtime vector
     runtime <- numeric(length(methods))
     names(runtime) <- methods
 
-    # 运行每个方法
+    # Run each method
     for (method in methods) {
         start_time <- Sys.time()
 
@@ -204,22 +204,22 @@ run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL,
             results[[method]] <- method_result
         }, error = function(e) {
             warning(paste(method, "error:", e$message))
-            # 确保错误时也保持 NULL 值
+            # Ensure NULL value is maintained on error
             results[[method]] <- NULL
         })
 
         runtime[method] <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
     }
 
-    # 确保结果列表有正确的名称
+    # Ensure results list has correct names
     if (length(results) == 0) {
         results <- setNames(vector("list", length(methods)), methods)
     }
 
-    # 创建结果摘要
+    # Create results summary
     summary <- create_summary(results, methods)
 
-    # 返回结果
+    # Return results
     list(
         results = results,
         summary = summary,
@@ -245,16 +245,16 @@ run_daa_methods <- function(data = NULL, count_matrix = NULL, group_info = NULL,
 #'
 #' @keywords internal
 run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...) {
-    # 预处理数据：添加小的伪计数以避免零值问题
+    # Preprocess data: Add small pseudocounts to avoid zero values
     counts <- counts + 1
 
-    # 检查数据有效性
+    # Check data validity
     if (all(counts == counts[1,1])) {
         warning("All counts are identical, DESeq2 analysis may not be meaningful")
         return(NULL)
     }
 
-    # 创建 DESeqDataSet 对象并运行分析
+    # Create DESeqDataSet object and run analysis
     tryCatch({
         dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = round(counts),
@@ -265,7 +265,7 @@ run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...
         dds <- DESeq2::DESeq(dds, quiet = TRUE, fitType = "local")
         res <- DESeq2::results(dds, alpha = alpha, pAdjustMethod = p_adjust_method)
 
-        # 转换为数据框并添加必要的列
+        # Convert to data frame and add necessary columns
         result_df <- as.data.frame(res)
         result_df$feature <- rownames(result_df)
         result_df$significant <- result_df$padj < alpha
@@ -290,7 +290,7 @@ run_deseq2 <- function(counts, groups, alpha = 0.05, p_adjust_method = "BH", ...
 #'
 #' @keywords internal
 run_aldex2 <- function(counts, groups, alpha, p_adjust_method, ...) {
-    # 确保 groups 是字符向量
+    # Ensure groups is a character vector
     groups <- as.character(groups)
 
     tryCatch({
@@ -337,7 +337,7 @@ run_ancombc <- function(counts, groups, alpha, ...) {
 #'
 #' @keywords internal
 create_summary <- function(results, methods) {
-    # 如果所有结果都为 NULL，返回空的摘要
+    # If all results are NULL, return empty summary
     if (all(sapply(results, is.null))) {
         return(data.frame(
             Method = methods,
