@@ -52,53 +52,53 @@
 evaluate_performance <- function(test_results, true_status, 
                                metrics = c("sensitivity", "specificity", "precision", "f1_score"),
                                conf_level = 0.95) {
-    # 验证输入
+    # Verify input
     if (!is.list(test_results) || length(test_results) == 0) {
         stop("results must be a list of method results")
     }
     
-    # 验证 metrics 参数
+    # Verify metrics parameters
     valid_metrics <- c("sensitivity", "specificity", "precision", "f1_score", "accuracy", "mcc")
     invalid_metrics <- setdiff(metrics, valid_metrics)
     if (length(invalid_metrics) > 0) {
         stop("should be one of: ", paste(valid_metrics, collapse = ", "))
     }
     
-    # 计算性能指标
+    # Computing Performance Metrics
     results <- lapply(test_results, function(pred) {
-        # 验证输入长度
+        # Verify input length
         if (length(pred) != length(true_status)) {
             stop("length of predicted and true status must match")
         }
         
-        # 验证逻辑值
+        # Validate logical value
         if (!is.logical(pred) || !is.logical(true_status)) {
             stop("predicted status must be logical")
         }
         
-        # 计算混淆矩阵
+        # Calculate the confusion matrix
         tp <- sum(pred & true_status)
         fp <- sum(pred & !true_status)
         tn <- sum(!pred & !true_status)
         fn <- sum(!pred & true_status)
         
-        # 计算基本指标
+        # Calculation of basic indicators
         sens <- if (tp + fn == 0) 0 else tp / (tp + fn)
         spec <- if (tn + fp == 0) 0 else tn / (tn + fp)
         prec <- if (tp + fp == 0) 0 else tp / (tp + fp)
         
-        # 计算 F1 分数
+        # Calculate F1 score
         f1 <- if (prec + sens == 0) 0 else 2 * (prec * sens) / (prec + sens)
         
-        # 计算准确率
+        # Calculation accuracy
         acc <- (tp + tn) / (tp + tn + fp + fn)
         
-        # 计算 MCC
+        # Calculate MCC
         mcc_num <- (tp * tn - fp * fn)
         mcc_den <- sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
         mcc <- if (mcc_den == 0) 0 else mcc_num / mcc_den
         
-        # 计算置信区间
+        # Calculate confidence intervals
         sens_ci <- if (tp + fn == 0) c(0, 0) else 
                    as.numeric(binom.test(tp, tp + fn, conf.level = conf_level)$conf.int)
         spec_ci <- if (tn + fp == 0) c(0, 0) else 
@@ -106,7 +106,7 @@ evaluate_performance <- function(test_results, true_status,
         prec_ci <- if (tp + fp == 0) c(0, 0) else 
                    as.numeric(binom.test(tp, tp + fp, conf.level = conf_level)$conf.int)
         
-        # 返回请求的指标
+        # Indicators of return requests
         metrics_values <- list(
             sensitivity = as.numeric(sens),
             specificity = as.numeric(spec),
@@ -122,18 +122,18 @@ evaluate_performance <- function(test_results, true_status,
             precision_ci_upper = as.numeric(prec_ci[2])
         )
         
-        # 只返回请求的指标
+        # Return only the requested metrics
         return(metrics_values[c(metrics, 
                               paste0(intersect(c("sensitivity", "specificity", "precision"), metrics), "_ci_lower"),
                               paste0(intersect(c("sensitivity", "specificity", "precision"), metrics), "_ci_upper"))])
     })
     
-    # 转换为数据框
+    # Convert to data frame
     result_df <- do.call(rbind, results)
     result_df <- as.data.frame(result_df, stringsAsFactors = FALSE)
     result_df$method <- names(test_results)
     
-    # 先添加排名，因为这时所有值都是数值类型
+    # Add the rankings first, because at this point all values are of numeric type
     rank_metrics <- intersect(c("sensitivity", "specificity", "precision"), metrics)
     for (metric in rank_metrics) {
         if (metric %in% names(result_df)) {
@@ -142,27 +142,27 @@ evaluate_performance <- function(test_results, true_status,
         }
     }
     
-    # 处理数值列的范围
+    # Handling ranges of numeric columns
     numeric_cols <- setdiff(names(result_df), "method")
     for (col in numeric_cols) {
         if (!is.null(result_df[[col]]) && length(result_df[[col]]) > 0) {
-            # 转换为数值
+            # Conversion to numeric values
             result_df[[col]] <- as.numeric(result_df[[col]])
             
-            # 根据列名确定范围
-            if (!grepl("_rank$", col)) {  # 不处理排名列
+            # Scope based on listing
+            if (!grepl("_rank$", col)) {  
                 if (col == "mcc") {
-                    # MCC 在 -1 到 1 之间
+                    # MCC ranges from -1 to 1
                     result_df[[col]] <- pmin(pmax(result_df[[col]], -1), 1)
                 } else {
-                    # 其他所有指标（包括置信区间）都在 0 到 1 之间
+                    # All other metrics (including confidence intervals) are between 0 and 1.
                     result_df[[col]] <- pmin(pmax(result_df[[col]], 0), 1)
                 }
             }
         }
     }
     
-    # 添加类
+    # Add Class
     class(result_df) <- c("daa_performance", "data.frame")
     
     return(result_df)

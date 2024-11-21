@@ -105,7 +105,7 @@ sensitivity_analysis <- function(data, parameters, method_names) {
         for (param_name in names(parameters)) {
             param_values <- parameters[[param_name]]
             
-            # 处理空参数值的情况
+            # Handle empty parameter values
             if (length(param_values) == 0) {
                 method_results[[param_name]] <- data.frame(
                     parameter_value = numeric(0),
@@ -113,12 +113,12 @@ sensitivity_analysis <- function(data, parameters, method_names) {
                     overlap_ratio = numeric(0),
                     effect_size = numeric(0),
                     stringsAsFactors = FALSE,
-                    row.names = character(0)  # 确保行名也是空的
+                    row.names = character(0)  # Ensure row names are also empty
                 )
                 next
             }
             
-            # 创建结果数据框
+            # Create results data frame
             param_results <- data.frame(
                 parameter_value = param_values,
                 n_significant = rep(NA, length(param_values)),
@@ -127,7 +127,7 @@ sensitivity_analysis <- function(data, parameters, method_names) {
                 stringsAsFactors = FALSE
             )
             
-            # 只有在参数值非空时才执行分析
+            # Only perform analysis when parameter values are not empty
             if (length(param_values) > 0) {
                 # Store baseline results
                 baseline_params <- list()
@@ -173,7 +173,7 @@ sensitivity_analysis <- function(data, parameters, method_names) {
         results[[method]] <- method_results
     }
     
-    # 确保返回值的类型正确
+    # Ensure correct return value type
     structure(results, class = c("daa_sensitivity", "list"))
 }
 
@@ -193,17 +193,17 @@ calculate_overlap_ratio <- function(set1, set2) {
 #' @param result2 Second analysis result
 #' @return Numeric value representing effect size
 calculate_effect_size <- function(result1, result2) {
-    # 如果输入是测试用例中的简单列表格式
+    # If input is simple list format from test cases
     if (!is.null(result1$test_statistics) && !is.null(result2$test_statistics)) {
         stats1 <- result1$test_statistics
         stats2 <- result2$test_statistics
     } else {
-        # 否则使用通用的提取函数
+        # Otherwise use generic extraction function
         stats1 <- get_test_statistics(result1)
         stats2 <- get_test_statistics(result2)
     }
     
-    # 输入验证
+    # Input validation
     if (is.null(stats1) || is.null(stats2)) {
         return(NA_real_)
     }
@@ -212,12 +212,12 @@ calculate_effect_size <- function(result1, result2) {
         return(NA_real_)
     }
     
-    # 确保两个向量长度相同
+    # Ensure vectors have same length
     if (length(stats1) != length(stats2)) {
         return(NA_real_)
     }
     
-    # 移除 NA 值
+    # Remove NA values
     valid_indices <- !is.na(stats1) & !is.na(stats2)
     if (!any(valid_indices)) {
         return(NA_real_)
@@ -226,7 +226,7 @@ calculate_effect_size <- function(result1, result2) {
     stats1 <- stats1[valid_indices]
     stats2 <- stats2[valid_indices]
     
-    # 计算相关性
+    # Calculate correlation
     if (length(unique(stats1)) == 1 || length(unique(stats2)) == 1) {
         return(NA_real_)
     }
@@ -247,7 +247,7 @@ get_significant_features <- function(results) {
     if (is.null(results) || length(results) == 0) {
         return(character(0))
     }
-    # 根据结果类型返回显著特征
+    # Return significant features based on result type
     if ("padj" %in% names(results)) {
         return(names(results$padj[results$padj < 0.05]))
     } else if ("significant" %in% names(results)) {
@@ -264,7 +264,7 @@ get_test_statistics <- function(results) {
         return(numeric(0))
     }
     
-    # 根据结果类型返回检验统计量
+    # Return test statistics based on result type
     if ("stat" %in% names(results)) {
         stats <- results$stat
     } else if ("statistic" %in% names(results)) {
@@ -275,7 +275,7 @@ get_test_statistics <- function(results) {
         return(numeric(0))
     }
     
-    # 确保返回数值向量
+    # Ensure numeric vector return
     stats <- as.numeric(stats)
     if (any(is.na(stats))) {
         return(numeric(0))
