@@ -12,7 +12,7 @@ Description: A comprehensive toolkit for comparing and evaluating Differential
     sensitivity analysis, and result visualization. Designed to help researchers 
     select appropriate DAA methods based on their data characteristics while 
     integrating seamlessly with existing microbiome analysis packages.
-License: MIT
+License: MIT + file LICENSE
 URL: https://github.com/cafferychen777/microbiomeDAAcomp
 BugReports: https://github.com/cafferychen777/microbiomeDAAcomp/issues
 Encoding: UTF-8
@@ -35,12 +35,13 @@ Imports:
     DESeq2,
     ALDEx2,
     ANCOMBC,
-    magrittr
+    magrittr,
+    tidyselect,
+    utils
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    plotly,
     covr
 VignetteBuilder: knitr
 biocViews:
