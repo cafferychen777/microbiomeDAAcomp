@@ -86,7 +86,7 @@ plot_performance <- function(results,
         stop("results must be a daa_performance object")
     }
     
-    # 检查数据点数量
+    # Check the number of data points
     if (plot_type == "violin" && nrow(results) < 3) {
         warning("Not enough data points for violin plot. Switching to boxplot.")
         plot_type <- "boxplot"
@@ -149,12 +149,12 @@ plot_performance <- function(results,
                 ggplot2::guides(fill = "none")
         },
         "violin" = {
-            # 修改 violin plot 的实现
+            # Modify the implementation of the violin plot
             ggplot2::ggplot(plot_data, 
                            ggplot2::aes(x = method, y = value, fill = method)) +
-                # 先添加 boxplot 作为基础
+                # First add a boxplot as the foundation
                 ggplot2::geom_boxplot(width = 0.2, alpha = 0.4) +
-                # 再添加 violin plot
+                # Add violin plot
                 ggplot2::geom_violin(alpha = 0.7, scale = "width") +
                 ggplot2::facet_wrap(~metric, 
                                   scales = "free_y",
@@ -194,7 +194,7 @@ plot_performance <- function(results,
             plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10)
         )
     
-    # 在函数末尾添加 plotly 支持
+    # Add Plotly support at the end of the function
     if (requireNamespace("plotly", quietly = TRUE)) {
         p <- plotly::layout(
             plotly::ggplotly(p),
