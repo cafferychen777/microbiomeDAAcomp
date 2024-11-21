@@ -12,7 +12,7 @@ test_that("simulate_data respects group sizes", {
     group_sizes <- c(30, 40)
     result <- simulate_data(n_samples = sum(group_sizes), n_taxa = 100, group_sizes = group_sizes)
 
-    # 将 table 结果转换为向量以便比较
+    # Convert table results to vector for comparison
     observed_sizes <- as.vector(table(result$group_info))
     expect_equal(observed_sizes, group_sizes)
 })
@@ -33,13 +33,13 @@ test_that("simulate_data generates phylogenetic tree when requested", {
 })
 
 test_that("simulate_data validates input correctly", {
-    # 测试组大小不等于样本总数的情况
+    # Test case where group sizes don't sum to total samples
     expect_error(
         simulate_data(n_samples = 100, n_taxa = 100, group_sizes = c(30, 40)),
         "Sum of group sizes must equal n_samples"
     )
 
-    # 测试差异数量超过总数的情况
+    # Test case where number of differential taxa exceeds total
     expect_error(
         simulate_data(n_samples = 60, n_taxa = 100, n_diff = 101),
         "Number of differential taxa cannot exceed total number of taxa"

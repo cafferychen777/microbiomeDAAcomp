@@ -21,16 +21,16 @@ test_that("evaluate_performance basic functionality works", {
 
   # Check metric values are in correct range
   numeric_cols <- names(result)[sapply(result, is.numeric)]
-  # 排除 rank 列和 mcc 列
+  # Exclude rank and mcc columns
   range_check_cols <- setdiff(numeric_cols,
                              c(grep("_rank$", numeric_cols, value = TRUE),
                                "mcc"))
 
-  # 检查常规指标是否在 0-1 范围内
+  # Check if regular metrics are within 0-1 range
   expect_true(all(result[, range_check_cols] >= 0 &
                  result[, range_check_cols] <= 1))
 
-  # 如果存在 mcc 列，检查其是否在 -1 到 1 范围内
+  # If mcc column exists, check if it's within -1 to 1 range
   if ("mcc" %in% names(result)) {
     expect_true(all(result$mcc >= -1 & result$mcc <= 1))
   }

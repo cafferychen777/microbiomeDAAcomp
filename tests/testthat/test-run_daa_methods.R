@@ -21,15 +21,15 @@ test_that("run_daa_methods works with simulated data", {
 })
 
 test_that("run_daa_methods handles method errors gracefully", {
-    # 创建一个更合理的无效数据集
+    # Create a more reasonable invalid dataset
     bad_counts <- matrix(
-        rpois(50, lambda = 0.1),  # 使用泊松分布生成稀疏计数
+        rpois(50, lambda = 0.1),  # Generate sparse counts using Poisson distribution
         nrow = 5,
         ncol = 10
     )
     groups <- factor(rep(1:2, each = 5))
 
-    # 测试是否正确处理警告
+    # Test if warnings are handled correctly
     expect_warning(
         {
             result <- run_daa_methods(
@@ -38,15 +38,15 @@ test_that("run_daa_methods handles method errors gracefully", {
                 methods = "DESeq2"
             )
         },
-        "DESeq2"  # 只匹配警告消息的一部分
+        "DESeq2"  # Only match part of the warning message
     )
 
-    # 验证即使出现警告，结果结构仍然是正确的
+    # Verify that result structure is correct even with warnings
     expect_type(result, "list")
     expect_named(result, c("results", "summary", "runtime", "parameters"))
-    expect_true(!is.null(result$results))  # 确保结果不是 NULL
-    expect_true(length(names(result$results)) > 0)  # 确保结果有名称
-    expect_true("DESeq2" %in% names(result$results))  # 检查方法名称
+    expect_true(!is.null(result$results))  # Ensure results are not NULL
+    expect_true(length(names(result$results)) > 0)  # Ensure results have names
+    expect_true("DESeq2" %in% names(result$results))  # Check method name
 })
 
 test_that("run_daa_methods returns correct output structure", {
