@@ -87,13 +87,37 @@ import_data <- function(data_path,
     return(result)
 }
 
-# Helper function to import from BIOM format
-import_from_biom <- function(file_path) {
+#' Import Data from BIOM Format
+#'
+#' @param file_path Character string specifying the path to the BIOM file
+#' @param ... Additional arguments passed to the import function
+#'
+#' @return A phyloseq object containing the imported data
+#'
+#' @examples
+#' \dontrun{
+#' data <- import_from_biom("path/to/file.biom")
+#' }
+#'
+#' @importFrom biomformat read_biom
+#' @keywords internal
+import_from_biom <- function(file_path, ...) {
     biom_data <- biomformat::read_biom(file_path)
     return(phyloseq::import_biom(biom_data))
 }
 
-# Helper function to import from phyloseq format
+#' Import Data from Phyloseq Format
+#'
+#' @param file_path Character string specifying the path to the saved phyloseq object
+#'
+#' @return A phyloseq object containing the imported data
+#'
+#' @examples
+#' \dontrun{
+#' data <- import_from_phyloseq("path/to/saved_phyloseq.RData")
+#' }
+#'
+#' @keywords internal
 import_from_phyloseq <- function(file_path) {
     load(file_path)
     if (!exists("physeq") || !inherits(physeq, "phyloseq")) {
@@ -102,8 +126,23 @@ import_from_phyloseq <- function(file_path) {
     return(physeq)
 }
 
-# Helper function to import from CSV format
-import_from_csv <- function(file_path, taxonomy_cols) {
+#' Import Data from CSV Format
+#'
+#' @param file_path Character string specifying the path to the CSV file
+#' @param taxonomy_cols Character vector specifying which columns contain taxonomy information
+#' @param ... Additional arguments passed to read.csv
+#'
+#' @return A phyloseq object containing the imported data
+#'
+#' @examples
+#' \dontrun{
+#' data <- import_from_csv("path/to/file.csv", 
+#'                        taxonomy_cols = c("Kingdom", "Phylum", "Class"))
+#' }
+#'
+#' @importFrom utils read.csv
+#' @keywords internal
+import_from_csv <- function(file_path, taxonomy_cols = NULL, ...) {
     # Read CSV file
     data <- read.csv(file_path, row.names = 1)
     
