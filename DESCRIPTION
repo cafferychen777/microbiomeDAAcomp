@@ -27,22 +27,16 @@ Imports:
     PMCMRplus,
     ape,
     plotly,
-    VennDiagram,
-    purrr,
-    tibble,
-    vegan,
+    scales,
     biomformat,
     DESeq2,
     ALDEx2,
     ANCOMBC,
-    magrittr,
-    tidyselect,
-    utils
+    tidyselect
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown,
-    covr
+    rmarkdown
 VignetteBuilder: knitr
 biocViews:
 Additional_repositories: 
