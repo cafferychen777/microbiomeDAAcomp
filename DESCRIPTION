@@ -1,6 +1,6 @@
 Package: microbiomeDAAcomp
 Title: Microbiome Differential Abundance Analysis Comparison Toolkit
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Chen", "Yang", , "cafferychen777@tamu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0009-9151-2901"))
