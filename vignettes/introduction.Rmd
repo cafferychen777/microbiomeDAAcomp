@@ -10,71 +10,125 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
 )
 ```
 
 ## Introduction
 
-The microbiomeDAAcomp package provides a comprehensive framework for comparing and evaluating different Differential Abundance Analysis (DAA) methods in microbiome studies. This vignette demonstrates the basic workflow and key functionalities of the package.
+The microbiomeDAAcomp package provides a comprehensive framework for comparing and evaluating different Differential Abundance Analysis (DAA) methods in microbiome studies. This package addresses several key challenges in microbiome data analysis:
 
-## Installation
+### Background
 
-You can install the development version of microbiomeDAAcomp from GitHub:
+Microbiome studies often face challenges in identifying truly differentially abundant taxa between conditions due to:
 
-```{r eval=FALSE}
-# install.packages("devtools")
-devtools::install_github("cafferychen777/microbiomeDAAcomp")
+- High dimensionality and sparsity of data
+- Compositional nature of microbiome data
+- Complex interactions between taxa
+- Technical and biological variability
+
+### Key Features
+
+The package offers:
+
+1. **Method Integration**: Implements multiple popular DAA methods including:
+
+   - DESeq2 (Love et al., 2014)
+   - ALDEx2 (Fernandes et al., 2014)
+   - ANCOM-BC (Lin & Peddada, 2020)
+
+2. **Performance Evaluation**:
+
+   - Comprehensive metrics (sensitivity, specificity, precision)
+   - Confidence interval estimation
+   - Statistical power analysis
+   - Method comparison frameworks
+
+3. **Visualization Tools**:
+
+   - Performance comparison plots
+   - Method agreement visualization
+   - Interactive plotting options
+   - Customizable themes
+
+4. **Statistical Analysis**:
+
+   - Multiple testing correction
+   - Effect size estimation
+   - Robust statistical comparisons
+   - Power analysis tools
+
+## Setup
+
+```{r setup}
+# Load required packages
+library(microbiomeDAAcomp)
 ```
 
 ## Basic Usage
 
-### Data Import
+### Create Sample Data
 
-First, let's import some microbiome data:
-
-```{r eval=FALSE}
-library(microbiomeDAAcomp)
-
-# Import data (example with CSV format)
-data <- import_data("path/to/data.csv", format = "csv")
-```
-
-### Data Simulation
-
-For testing and evaluation purposes, we can simulate microbiome data:
-
-```{r eval=FALSE}
-# Simulate a dataset with 100 samples and 50 taxa
-sim_data <- simulate_data(
-  n_samples = 100,
-  n_taxa = 50,
-  dispersion = 0.3,
-  effect_size = 1
+```{r}
+# Create sample test results
+set.seed(123)
+n_samples <- 100
+test_results <- list(
+  "DESeq2" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.7, 0.3)),
+  "edgeR" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.6, 0.4)),
+  "limma" = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.5, 0.5))
 )
+true_status <- sample(c(TRUE, FALSE), n_samples, replace = TRUE)
 ```
 
-### Running DAA Methods
+### Evaluate Performance
 
-The package allows you to run multiple DAA methods and compare their results:
-
-```{r eval=FALSE}
-# Run multiple DAA methods
-results <- run_daa_methods(
-  data = sim_data,
-  methods = c("DESeq2", "ALDEx2")
+```{r}
+# Calculate performance metrics
+perf <- evaluate_performance(
+  test_results,
+  true_status,
+  metrics = c("sensitivity", "specificity", "precision", "f1_score", "accuracy")
 )
+
+# Display results
+print(perf)
 ```
 
-## Future Development
+### Visualize Results
 
-This package is under active development. Upcoming features include:
-- Implementation of additional DAA methods
-- Advanced visualization tools
-- Performance benchmarking capabilities
-- Comprehensive method comparison metrics
+```{r}
+# Create different types of plots
+# Heatmap visualization
+plot_performance(perf, plot_type = "heatmap", theme = "default")
 
-## Session Info
+# Boxplot visualization
+plot_performance(perf, plot_type = "boxplot", theme = "classic")
+
+```
+
+### Compare Methods
+
+```{r}
+# Create sample performance results
+perf_data <- data.frame(
+  method = rep(c("method1", "method2"), each = 10),
+  accuracy = runif(20, 0.8, 0.95),
+  precision = runif(20, 0.8, 0.95),
+  recall = runif(20, 0.8, 0.95),
+  f1_score = runif(20, 0.8, 0.95)
+)
+
+# Run comprehensive comparison
+results <- compare_methods(perf_data, comparison_type = "comprehensive")
+
+# Display results
+print(results)
+```
+
+## Session Information
 
 ```{r}
 sessionInfo()

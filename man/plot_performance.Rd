@@ -8,7 +8,8 @@ plot_performance(
   results,
   plot_type = c("heatmap", "boxplot", "violin"),
   theme = "default",
-  colors = c("#4A90E2", "#50C878", "#E67E22")
+  colors = c("#4A90E2", "#50C878", "#E67E22"),
+  use_plotly = FALSE
 )
 }
 \arguments{
@@ -30,13 +31,15 @@ Must include 'method' column and at least one metric column}
 }}
 
 \item{colors}{Colors for the plots. Default: c("#4A90E2", "#50C878", "#E67E22")}
+
+\item{use_plotly}{Logical indicating whether to convert plot to interactive plotly object}
 }
 \value{
-A ggplot2 object (or plotly object if plotly is available) containing:
+A ggplot2 object (or plotly object if use_plotly is TRUE) containing:
 \itemize{
 \item Performance visualization based on specified plot_type
 \item Confidence intervals (if available in input data)
-\item Interactive features (if plotly is available)
+\item Interactive features (if plotly is enabled)
 }
 }
 \description{
