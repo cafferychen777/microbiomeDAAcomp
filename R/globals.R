@@ -26,7 +26,9 @@ utils::globalVariables(c(
     "t.test",
     "setNames",
     "rnbinom",
-    "rbinom"
-)) 
+    "rbinom",
+    "ci_lower",
+    "ci_upper"
+))
 
 

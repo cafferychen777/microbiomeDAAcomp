@@ -20,12 +20,13 @@
 #'          \item "classic": Classic theme with white background
 #'        }
 #' @param colors Colors for the plots. Default: c("#4A90E2", "#50C878", "#E67E22")
+#' @param use_plotly Logical indicating whether to convert plot to interactive plotly object
 #'
-#' @return A ggplot2 object (or plotly object if plotly is available) containing:
+#' @return A ggplot2 object (or plotly object if use_plotly is TRUE) containing:
 #'         \itemize{
 #'           \item Performance visualization based on specified plot_type
 #'           \item Confidence intervals (if available in input data)
-#'           \item Interactive features (if plotly is available)
+#'           \item Interactive features (if plotly is enabled)
 #'         }
 #'
 #' @details
@@ -79,7 +80,8 @@
 plot_performance <- function(results, 
                            plot_type = c("heatmap", "boxplot", "violin"),
                            theme = "default",
-                           colors = c("#4A90E2", "#50C878", "#E67E22")) {
+                           colors = c("#4A90E2", "#50C878", "#E67E22"),
+                           use_plotly = FALSE) {
     # Input validation
     plot_type <- match.arg(plot_type)
     if (!inherits(results, "daa_performance")) {
@@ -152,10 +154,8 @@ plot_performance <- function(results,
             # Modify the implementation of the violin plot
             ggplot2::ggplot(plot_data, 
                            ggplot2::aes(x = method, y = value, fill = method)) +
-                # First add a boxplot as the foundation
-                ggplot2::geom_boxplot(width = 0.2, alpha = 0.4) +
-                # Add violin plot
-                ggplot2::geom_violin(alpha = 0.7, scale = "width") +
+                ggplot2::geom_violin(alpha = 0.7) +  # Add violin first
+                ggplot2::geom_boxplot(width = 0.2, alpha = 0.4) +  # Then boxplot
                 ggplot2::facet_wrap(~metric, 
                                   scales = "free_y",
                                   labeller = as_labeller(metric_labels)) +
@@ -194,13 +194,24 @@ plot_performance <- function(results,
             plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10)
         )
     
-    # Add Plotly support at the end of the function
-    if (requireNamespace("plotly", quietly = TRUE)) {
-        p <- plotly::layout(
-            plotly::ggplotly(p),
-            showlegend = FALSE,
-            margin = list(t = 50)
-        )
+    # Only convert to plotly if specifically requested
+    if (use_plotly && requireNamespace("plotly", quietly = TRUE)) {
+        p <- plotly::ggplotly(p)
+        p <- plotly::layout(p, showlegend = FALSE, margin = list(t = 50))
+    }
+    
+    # 处理置信区间
+    if (plot_type %in% c("boxplot", "violin")) {
+        if (all(c("ci_lower", "ci_upper") %in% names(plot_data))) {
+            p <- p + ggplot2::geom_errorbar(
+                ggplot2::aes(
+                    ymin = ci_lower,
+                    ymax = ci_upper
+                ),
+                width = 0.2,
+                position = ggplot2::position_dodge(0.75)
+            )
+        }
     }
     
     return(p)
